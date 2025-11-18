@@ -1,6 +1,12 @@
 package com.jean.servesmart.restaurant.controller;
 
-import com.jean.servesmart.restaurant.dto.User.*;
+import com.jean.servesmart.restaurant.dto.User.ChangePasswordDto;
+import com.jean.servesmart.restaurant.dto.User.UserRegisterDto;
+import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
+import com.jean.servesmart.restaurant.dto.User.UserUpdateDto;
+import com.jean.servesmart.restaurant.exception.user.InvalidPasswordChangeException;
+import com.jean.servesmart.restaurant.exception.user.UserEmailAlreadyUsedException;
+import com.jean.servesmart.restaurant.exception.user.UserNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.UserService;
 
@@ -10,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,59 +30,95 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody UserRegisterDto dto) {
-        var user = users.register(dto);
-        if (user == null) {
+        try {
+            UserResponseDto user = users.register(dto);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(user, "User registered successfully"));
+        } catch (UserEmailAlreadyUsedException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Email already in use or registration failed"));
+                    .body(ApiResponse.error("Email already in use"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Registration failed"));
         }
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(user, "User registered successfully"));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
-        List<UserResponseDto> list = users.getAll();
-        if (list.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                    .body(ApiResponse.error("No users found"));
+        try {
+            List<UserResponseDto> list = users.getAll();
+
+            String message = list.isEmpty()
+                    ? "No users found"
+                    : "Users retrieved successfully";
+
+            // Altijd 200 OK, ook als lijst leeg is
+            return ResponseEntity.ok(ApiResponse.success(list, message));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load users"));
         }
-        return ResponseEntity.ok(ApiResponse.success(list, "Users retrieved successfully"));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
-        var user = users.getById(id);
-        if (user.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("User not found"));
+        try {
+            Optional<UserResponseDto> user = users.getById(id);
+            if (user.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("User not found"));
+            }
+            return ResponseEntity.ok(ApiResponse.success(user.get(), "User retrieved successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load user"));
         }
-        return ResponseEntity.ok(ApiResponse.success(user.get(), "User retrieved successfully"));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @Valid @RequestBody UserUpdateDto dto) {
-        var updated = users.updateProfile(id, dto);
-        if (updated == null) {
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id,
+                                                 @Valid @RequestBody UserUpdateDto dto) {
+        try {
+            UserResponseDto updated = users.updateProfile(id, dto);
+            return ResponseEntity.ok(ApiResponse.success(updated, "User updated successfully"));
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("User not found"));
+        } catch (UserEmailAlreadyUsedException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Failed to update user — invalid ID or email already used"));
+                    .body(ApiResponse.error("Email already in use"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to update user"));
         }
-        return ResponseEntity.ok(ApiResponse.success(updated, "User updated successfully"));
     }
 
     @PatchMapping("/{id}/password")
     public ResponseEntity<ApiResponse<?>> changePassword(@PathVariable Integer id,
                                                          @Valid @RequestBody ChangePasswordDto dto) {
-        boolean success = users.changePassword(id, dto);
-        if (!success) {
+        try {
+            users.changePassword(id, dto);
+            return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("User not found"));
+        } catch (InvalidPasswordChangeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Old password incorrect or new password invalid"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to change password"));
         }
-        return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
     }
 
     @GetMapping("/email-exists")
     public ResponseEntity<ApiResponse<?>> emailExists(@RequestParam String email) {
-        boolean exists = users.emailExists(email);
-        return ResponseEntity.ok(ApiResponse.success(exists, "Email existence check completed"));
+        try {
+            boolean exists = users.emailExists(email);
+            return ResponseEntity.ok(ApiResponse.success(exists, "Email existence check completed"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to check email existence"));
+        }
     }
 }

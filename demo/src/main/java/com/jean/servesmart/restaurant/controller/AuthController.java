@@ -2,6 +2,8 @@ package com.jean.servesmart.restaurant.controller;
 
 import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
 import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
+import com.jean.servesmart.restaurant.exception.auth.InactiveAccountException;
+import com.jean.servesmart.restaurant.exception.auth.InvalidCredentialsException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.AuthService;
 
@@ -22,13 +24,21 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody UserLoginDto dto) {
-        UserResponseDto user = auth.login(dto);
+        try {
+            UserResponseDto user = auth.login(dto);
+            return ResponseEntity.ok(ApiResponse.success(user, "Login successful"));
 
-        if (user == null) {
+        } catch (InvalidCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("Invalid email, password, or inactive account"));
-        }
+                    .body(ApiResponse.error("Invalid email or password"));
 
-        return ResponseEntity.ok(ApiResponse.success(user, "Login successful"));
+        } catch (InactiveAccountException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Account is inactive"));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Login failed"));
+        }
     }
 }

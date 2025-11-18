@@ -1,6 +1,9 @@
 package com.jean.servesmart.restaurant.controller;
 
-import com.jean.servesmart.restaurant.dto.MenuCategory.*;
+import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryCreateDto;
+import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryResponseDto;
+import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryUpdateDto;
+import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.MenuCategoryService;
 
@@ -10,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/menu-categories")
@@ -23,49 +27,92 @@ public class MenuCategoryController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody MenuCategoryCreateDto dto) {
-        var category = service.create(dto);
-        if (category == null)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Failed to create category"));
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(category, "Category created successfully"));
+        try {
+            MenuCategoryResponseDto category = service.create(dto);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(category, "Category created successfully"));
+        } catch (Exception e) {
+            // hier kun je later echte logging toevoegen
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to create category"));
+        }
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
-        List<MenuCategoryResponseDto> list = service.getAll();
-        if (list.isEmpty())
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.error("No categories found"));
-        return ResponseEntity.ok(ApiResponse.success(list, "Categories loaded"));
+        try {
+            List<MenuCategoryResponseDto> list = service.getAll();
+
+            String message = list.isEmpty()
+                    ? "No categories found"
+                    : "Categories loaded";
+
+            // Altijd 200 OK, ook als de lijst leeg is
+            return ResponseEntity.ok(ApiResponse.success(list, message));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load categories"));
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
-        var category = service.getById(id);
-        if (category.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Category not found"));
-        return ResponseEntity.ok(ApiResponse.success(category.get(), "Category retrieved"));
+        try {
+            Optional<MenuCategoryResponseDto> category = service.getById(id);
+            if (category.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Category not found"));
+            }
+            return ResponseEntity.ok(ApiResponse.success(category.get(), "Category retrieved"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load category"));
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @RequestBody MenuCategoryUpdateDto dto) {
-        var updated = service.update(id, dto);
-        if (updated == null)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Failed to update category"));
-        return ResponseEntity.ok(ApiResponse.success(updated, "Category updated successfully"));
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id,
+                                                 @RequestBody MenuCategoryUpdateDto dto) {
+        try {
+            MenuCategoryResponseDto updated = service.update(id, dto);
+            return ResponseEntity.ok(ApiResponse.success(updated, "Category updated successfully"));
+        } catch (MenuCategoryNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Category not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to update category"));
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable Integer id) {
-        boolean deleted = service.delete(id);
-        if (!deleted)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Failed to delete category"));
-        return ResponseEntity.ok(ApiResponse.success(null, "Category deleted successfully"));
+        try {
+            service.delete(id);
+            return ResponseEntity.ok(ApiResponse.success(null, "Category deleted successfully"));
+        } catch (MenuCategoryNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Category not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to delete category"));
+        }
     }
 
     @GetMapping("/active")
     public ResponseEntity<ApiResponse<?>> getActive() {
-        List<MenuCategoryResponseDto> list = service.getActive();
-        if (list.isEmpty())
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.error("No active categories found"));
-        return ResponseEntity.ok(ApiResponse.success(list, "Active categories retrieved"));
+        try {
+            List<MenuCategoryResponseDto> list = service.getActive();
+
+            String message = list.isEmpty()
+                    ? "No active categories found"
+                    : "Active categories retrieved";
+
+            // Altijd 200 OK, ook als de lijst leeg is
+            return ResponseEntity.ok(ApiResponse.success(list, message));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load active categories"));
+        }
     }
 }

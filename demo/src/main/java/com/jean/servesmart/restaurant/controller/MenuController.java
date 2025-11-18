@@ -1,6 +1,8 @@
 package com.jean.servesmart.restaurant.controller;
 
 import com.jean.servesmart.restaurant.dto.Menu.MenuItemDto;
+import com.jean.servesmart.restaurant.exception.menuitem.MenuItemException;
+import com.jean.servesmart.restaurant.exception.menuitem.MenuItemNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.MenuService;
 
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/menu")
@@ -23,49 +26,97 @@ public class MenuController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody MenuItemDto dto) {
-        var item = service.create(dto);
-        if (item == null)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Failed to create menu item"));
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(item, "Menu item created successfully"));
+        try {
+            MenuItemDto item = service.create(dto);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(item, "Menu item created successfully"));
+        } catch (MenuItemException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid category for menu item"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to create menu item"));
+        }
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
-        List<MenuItemDto> items = service.getAll();
-        if (items.isEmpty())
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.error("No menu items found"));
-        return ResponseEntity.ok(ApiResponse.success(items, "Menu items loaded"));
+        try {
+            List<MenuItemDto> items = service.getAll();
+
+            String message = items.isEmpty()
+                    ? "No menu items found"
+                    : "Menu items loaded";
+
+            // Altijd 200 OK, ook als de lijst leeg is
+            return ResponseEntity.ok(ApiResponse.success(items, message));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load menu items"));
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
-        var item = service.getById(id);
-        if (item.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Menu item not found"));
-        return ResponseEntity.ok(ApiResponse.success(item.get(), "Menu item retrieved"));
+        try {
+            Optional<MenuItemDto> item = service.getById(id);
+            if (item.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("Menu item not found"));
+            }
+            return ResponseEntity.ok(ApiResponse.success(item.get(), "Menu item retrieved"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load menu item"));
+        }
     }
 
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<ApiResponse<?>> getByCategory(@PathVariable Integer categoryId) {
-        var list = service.getByCategory(categoryId);
-        if (list.isEmpty())
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(ApiResponse.error("No items for this category"));
-        return ResponseEntity.ok(ApiResponse.success(list, "Menu items retrieved"));
+        try {
+            List<MenuItemDto> list = service.getByCategory(categoryId);
+
+            String message = list.isEmpty()
+                    ? "No menu items for this category"
+                    : "Menu items retrieved";
+
+            // Altijd 200 OK, ook als leeg
+            return ResponseEntity.ok(ApiResponse.success(list, message));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to load menu items for category"));
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @RequestBody MenuItemDto dto) {
-        var updated = service.update(id, dto);
-        if (updated == null)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Failed to update menu item"));
-        return ResponseEntity.ok(ApiResponse.success(updated, "Menu item updated successfully"));
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id,
+                                                 @RequestBody MenuItemDto dto) {
+        try {
+            MenuItemDto updated = service.update(id, dto);
+            return ResponseEntity.ok(ApiResponse.success(updated, "Menu item updated successfully"));
+        } catch (MenuItemNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Menu item not found"));
+        } catch (MenuItemException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid data for menu item"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to update menu item"));
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable Integer id) {
-        boolean deleted = service.delete(id);
-        if (!deleted)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Failed to delete menu item"));
-        return ResponseEntity.ok(ApiResponse.success(null, "Menu item deleted successfully"));
+        try {
+            service.delete(id);
+            return ResponseEntity.ok(ApiResponse.success(null, "Menu item deleted successfully"));
+        } catch (MenuItemNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Menu item not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to delete menu item"));
+        }
     }
 }

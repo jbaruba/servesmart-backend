@@ -1,6 +1,8 @@
 package com.jean.servesmart.restaurant.service.impl;
 
 import com.jean.servesmart.restaurant.dto.Menu.MenuItemDto;
+import com.jean.servesmart.restaurant.exception.menuitem.MenuItemException;
+import com.jean.servesmart.restaurant.exception.menuitem.MenuItemNotFoundException;
 import com.jean.servesmart.restaurant.model.MenuCategory;
 import com.jean.servesmart.restaurant.model.MenuItems;
 import com.jean.servesmart.restaurant.repository.MenuCategoryRepository;
@@ -28,103 +30,89 @@ public class MenuImpl implements MenuService {
 
     @Override
     public MenuItemDto create(MenuItemDto dto) {
-        try {
-            Optional<MenuCategory> category = categoryRepo.findById(dto.getCategoryId());
-            if (category.isEmpty()) return null;
+        // Zorg dat de category bestaat
+        MenuCategory category = categoryRepo.findById(dto.getCategoryId())
+                .orElseThrow(MenuItemException::new);
 
-            MenuItems item = new MenuItems();
-            item.setCategory(category.get());
-            item.setName(dto.getName());
-            item.setDescription(dto.getDescription());
-            item.setPrice(dto.getPrice());
-            item.setActive(dto.isActive());
-            item.setGluten(dto.isGluten());
-            item.setNuts(dto.isNuts());
-            item.setDairy(dto.isDairy());
-            item.setAlcohol(dto.isAlcohol());
+        MenuItems item = new MenuItems();
+        item.setCategory(category);
+        item.setName(dto.getName());
+        item.setDescription(dto.getDescription());
+        item.setPrice(dto.getPrice());
+        item.setActive(dto.isActive());
+        item.setGluten(dto.isGluten());
+        item.setNuts(dto.isNuts());
+        item.setDairy(dto.isDairy());
+        item.setAlcohol(dto.isAlcohol());
 
-            return toDto(menuRepo.save(item));
-
-        } catch (Exception e) {
-            System.err.println("Error in create(): " + e.getMessage());
-            return null;
-        }
+        MenuItems saved = menuRepo.save(item);
+        return toDto(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<MenuItemDto> getAll() {
-        try {
-            return menuRepo.findAll().stream().map(this::toDto).collect(Collectors.toList());
-        } catch (Exception e) {
-            System.err.println("Error in getAll(): " + e.getMessage());
-            return List.of();
-        }
+        return menuRepo.findAll()
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<MenuItemDto> getById(Integer id) {
-        try {
-            return menuRepo.findById(id).map(this::toDto);
-        } catch (Exception e) {
-            System.err.println("Error in getById(): " + e.getMessage());
-            return Optional.empty();
-        }
+        return menuRepo.findById(id)
+                .map(this::toDto);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<MenuItemDto> getByCategory(Integer categoryId) {
-        try {
-            return menuRepo.findByCategory_Id(categoryId).stream()
-                    .map(this::toDto)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            System.err.println("Error in getByCategory(): " + e.getMessage());
-            return List.of();
-        }
+        return menuRepo.findByCategory_Id(categoryId)
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
     public MenuItemDto update(Integer id, MenuItemDto dto) {
-        try {
-            Optional<MenuItems> optional = menuRepo.findById(id);
-            if (optional.isEmpty()) return null;
+        MenuItems item = menuRepo.findById(id)
+                .orElseThrow(MenuItemNotFoundException::new);
 
-            MenuItems item = optional.get();
-
-            if (dto.getName() != null) item.setName(dto.getName());
-            if (dto.getDescription() != null) item.setDescription(dto.getDescription());
-            if (dto.getPrice() != null) item.setPrice(dto.getPrice());
-            item.setActive(dto.isActive());
-            item.setGluten(dto.isGluten());
-            item.setNuts(dto.isNuts());
-            item.setDairy(dto.isDairy());
-            item.setAlcohol(dto.isAlcohol());
-
-            if (dto.getCategoryId() != null) {
-                categoryRepo.findById(dto.getCategoryId()).ifPresent(item::setCategory);
-            }
-
-            return toDto(menuRepo.save(item));
-
-        } catch (Exception e) {
-            System.err.println("Error in update(): " + e.getMessage());
-            return null;
+        if (dto.getName() != null) {
+            item.setName(dto.getName());
         }
+        if (dto.getDescription() != null) {
+            item.setDescription(dto.getDescription());
+        }
+        if (dto.getPrice() != null) {
+            item.setPrice(dto.getPrice());
+        }
+
+        item.setActive(dto.isActive());
+        item.setGluten(dto.isGluten());
+        item.setNuts(dto.isNuts());
+        item.setDairy(dto.isDairy());
+        item.setAlcohol(dto.isAlcohol());
+
+        if (dto.getCategoryId() != null) {
+            MenuCategory category = categoryRepo.findById(dto.getCategoryId())
+                    .orElseThrow(MenuItemException::new);
+            item.setCategory(category);
+        }
+
+        MenuItems updated = menuRepo.save(item);
+        return toDto(updated);
     }
 
     @Override
     public boolean delete(Integer id) {
-        try {
-            if (!menuRepo.existsById(id)) return false;
-            menuRepo.deleteById(id);
-            return true;
-        } catch (Exception e) {
-            System.err.println("Error in delete(): " + e.getMessage());
-            return false;
+        if (!menuRepo.existsById(id)) {
+            throw new MenuItemNotFoundException();
         }
+
+        menuRepo.deleteById(id);
+        return true;
     }
 
     private MenuItemDto toDto(MenuItems item) {

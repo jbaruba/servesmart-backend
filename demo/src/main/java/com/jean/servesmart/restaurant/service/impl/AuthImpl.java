@@ -1,16 +1,16 @@
 package com.jean.servesmart.restaurant.service.impl;
 
+import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
 import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
+import com.jean.servesmart.restaurant.exception.auth.InactiveAccountException;
+import com.jean.servesmart.restaurant.exception.auth.InvalidCredentialsException;
 import com.jean.servesmart.restaurant.model.User;
 import com.jean.servesmart.restaurant.repository.UserRepository;
 import com.jean.servesmart.restaurant.service.interfaces.AuthService;
-import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -26,28 +26,18 @@ public class AuthImpl implements AuthService {
 
     @Override
     public UserResponseDto login(UserLoginDto dto) {
-        try {
-            Optional<User> optionalUser = repo.findByEmail(dto.getEmail());
-            if (optionalUser.isEmpty()) {
-                return null; 
-            }
+        User user = repo.findByEmail(dto.getEmail())
+                .orElseThrow(InvalidCredentialsException::new);
 
-            User user = optionalUser.get();
-
-            if (!user.isActive()) {
-                return null; 
-            }
-
-            if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
-                return null; 
-            }
-
-            return toResponse(user);
-
-        } catch (Exception e) {
-            System.err.println("Error during login: " + e.getMessage());
-            return null; 
+        if (!user.isActive()) {
+            throw new InactiveAccountException();
         }
+
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
+            throw new InvalidCredentialsException();
+        }
+
+        return toResponse(user);
     }
 
     private UserResponseDto toResponse(User user) {
