@@ -3,6 +3,8 @@ package com.jean.servesmart.restaurant.controller;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryCreateDto;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryResponseDto;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryUpdateDto;
+import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryAlreadyExistsException;
+import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryInvalidDataException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.MenuCategoryService;
@@ -31,8 +33,13 @@ public class MenuCategoryController {
             MenuCategoryResponseDto category = service.create(dto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(category, "Category created successfully"));
+        } catch (MenuCategoryInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid category data"));
+        } catch (MenuCategoryAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("Category name already exists"));
         } catch (Exception e) {
-            // hier kun je later echte logging toevoegen
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to create category"));
         }
@@ -47,7 +54,6 @@ public class MenuCategoryController {
                     ? "No categories found"
                     : "Categories loaded";
 
-            // Altijd 200 OK, ook als de lijst leeg is
             return ResponseEntity.ok(ApiResponse.success(list, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -79,6 +85,12 @@ public class MenuCategoryController {
         } catch (MenuCategoryNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Category not found"));
+        } catch (MenuCategoryInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid category data"));
+        } catch (MenuCategoryAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("Category name already exists"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to update category"));
@@ -93,6 +105,9 @@ public class MenuCategoryController {
         } catch (MenuCategoryNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Category not found"));
+        } catch (MenuCategoryInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid category data"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to delete category"));
@@ -108,7 +123,6 @@ public class MenuCategoryController {
                     ? "No active categories found"
                     : "Active categories retrieved";
 
-            // Altijd 200 OK, ook als de lijst leeg is
             return ResponseEntity.ok(ApiResponse.success(list, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

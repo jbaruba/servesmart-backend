@@ -9,4 +9,7 @@ public interface MenuItemsRepository extends JpaRepository<MenuItems, Integer> {
     List<MenuItems> findByCategory_Id(Integer categoryId);
     List<MenuItems> findByActiveTrue();
     List<MenuItems> findByNameContainingIgnoreCase(String namePart);
+    boolean existsByCategory_IdAndName(Integer categoryId, String name);
+    boolean existsByCategory_IdAndNameAndIdNot(Integer categoryId, String name, Integer id);
 }
+

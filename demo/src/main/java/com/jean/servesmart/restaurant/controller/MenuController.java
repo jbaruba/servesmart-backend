@@ -1,7 +1,9 @@
 package com.jean.servesmart.restaurant.controller;
 
 import com.jean.servesmart.restaurant.dto.Menu.MenuItemDto;
-import com.jean.servesmart.restaurant.exception.menuitem.MenuItemException;
+import com.jean.servesmart.restaurant.exception.menuitem.MenuItemAlreadyExistsException;
+import com.jean.servesmart.restaurant.exception.menuitem.MenuItemCategoryNotFoundException;
+import com.jean.servesmart.restaurant.exception.menuitem.MenuItemInvalidDataException;
 import com.jean.servesmart.restaurant.exception.menuitem.MenuItemNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.MenuService;
@@ -30,9 +32,15 @@ public class MenuController {
             MenuItemDto item = service.create(dto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(item, "Menu item created successfully"));
-        } catch (MenuItemException e) {
+        } catch (MenuItemInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Invalid category for menu item"));
+                    .body(ApiResponse.error("Invalid menu item data"));
+        } catch (MenuItemCategoryNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Category for menu item not found"));
+        } catch (MenuItemAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("Menu item name already exists in this category"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to create menu item"));
@@ -47,8 +55,6 @@ public class MenuController {
             String message = items.isEmpty()
                     ? "No menu items found"
                     : "Menu items loaded";
-
-            // Altijd 200 OK, ook als de lijst leeg is
             return ResponseEntity.ok(ApiResponse.success(items, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -65,6 +71,9 @@ public class MenuController {
                         .body(ApiResponse.error("Menu item not found"));
             }
             return ResponseEntity.ok(ApiResponse.success(item.get(), "Menu item retrieved"));
+        } catch (MenuItemInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid menu item id"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to load menu item"));
@@ -79,9 +88,10 @@ public class MenuController {
             String message = list.isEmpty()
                     ? "No menu items for this category"
                     : "Menu items retrieved";
-
-            // Altijd 200 OK, ook als leeg
             return ResponseEntity.ok(ApiResponse.success(list, message));
+        } catch (MenuItemInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid category id"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to load menu items for category"));
@@ -97,9 +107,15 @@ public class MenuController {
         } catch (MenuItemNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Menu item not found"));
-        } catch (MenuItemException e) {
+        } catch (MenuItemCategoryNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Category for menu item not found"));
+        } catch (MenuItemInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid data for menu item"));
+        } catch (MenuItemAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error("Menu item name already exists in this category"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to update menu item"));
@@ -114,6 +130,9 @@ public class MenuController {
         } catch (MenuItemNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Menu item not found"));
+        } catch (MenuItemInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid menu item id"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to delete menu item"));

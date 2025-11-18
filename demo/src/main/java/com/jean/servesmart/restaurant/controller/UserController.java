@@ -51,8 +51,6 @@ public class UserController {
             String message = list.isEmpty()
                     ? "No users found"
                     : "Users retrieved successfully";
-
-            // Altijd 200 OK, ook als lijst leeg is
             return ResponseEntity.ok(ApiResponse.success(list, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

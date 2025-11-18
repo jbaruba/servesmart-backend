@@ -10,5 +10,7 @@ import java.util.Optional;
 public interface MenuCategoryRepository extends JpaRepository<MenuCategory, Integer> {
     Optional<MenuCategory> findByName(String name);
     List<MenuCategory> findByActiveTrue();
+    boolean existsByName(String name);
+    boolean existsByPosition(Integer position);
 
 }

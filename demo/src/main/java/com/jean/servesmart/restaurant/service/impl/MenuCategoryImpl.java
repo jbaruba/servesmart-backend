@@ -1,6 +1,10 @@
 package com.jean.servesmart.restaurant.service.impl;
 
-import com.jean.servesmart.restaurant.dto.MenuCategory.*;
+import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryCreateDto;
+import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryResponseDto;
+import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryUpdateDto;
+import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryAlreadyExistsException;
+import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryInvalidDataException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryNotFoundException;
 import com.jean.servesmart.restaurant.model.MenuCategory;
 import com.jean.servesmart.restaurant.repository.MenuCategoryRepository;
@@ -25,9 +29,33 @@ public class MenuCategoryImpl implements MenuCategoryService {
 
     @Override
     public MenuCategoryResponseDto create(MenuCategoryCreateDto dto) {
+
+        if (dto == null) {
+            throw new MenuCategoryInvalidDataException();
+        }
+
+        if (dto.getName() == null || dto.getName().isBlank()) {
+            throw new MenuCategoryInvalidDataException();
+        }
+
+        if (dto.getPosition() == null || dto.getPosition() < 0) {
+            throw new MenuCategoryInvalidDataException();
+        }
+
+        String trimmedName = dto.getName().trim();
+
+        if (repo.existsByName(trimmedName)) {
+            throw new MenuCategoryAlreadyExistsException();
+        }
+
+        Integer position = dto.getPosition();
+        if (position != 0 && repo.existsByPosition(position)) {
+            position = 0;
+        }
+
         MenuCategory category = new MenuCategory();
-        category.setName(dto.getName());
-        category.setPosition(dto.getPosition());
+        category.setName(trimmedName);
+        category.setPosition(position);
         category.setActive(dto.isActive());
 
         MenuCategory saved = repo.save(category);
@@ -52,15 +80,48 @@ public class MenuCategoryImpl implements MenuCategoryService {
 
     @Override
     public MenuCategoryResponseDto update(Integer id, MenuCategoryUpdateDto dto) {
+        if (id == null) {
+            throw new MenuCategoryInvalidDataException();
+        }
+
+        if (dto == null) {
+            throw new MenuCategoryInvalidDataException();
+        }
+
         MenuCategory category = repo.findById(id)
                 .orElseThrow(MenuCategoryNotFoundException::new);
 
         if (dto.getName() != null) {
-            category.setName(dto.getName());
+            if (dto.getName().isBlank()) {
+                throw new MenuCategoryInvalidDataException();
+            }
+
+            String newName = dto.getName().trim();
+
+            if (!newName.equals(category.getName()) && repo.existsByName(newName)) {
+                throw new MenuCategoryAlreadyExistsException();
+            }
+
+            category.setName(newName);
         }
+
         if (dto.getPosition() != null) {
-            category.setPosition(dto.getPosition());
+            if (dto.getPosition() < 0) {
+                throw new MenuCategoryInvalidDataException();
+            }
+
+            Integer newPosition = dto.getPosition();
+
+           
+            if (newPosition != 0
+                    && !newPosition.equals(category.getPosition())
+                    && repo.existsByPosition(newPosition)) {
+                newPosition = 0;
+            }
+
+            category.setPosition(newPosition);
         }
+
         if (dto.getActive() != null) {
             category.setActive(dto.getActive());
         }
@@ -71,6 +132,10 @@ public class MenuCategoryImpl implements MenuCategoryService {
 
     @Override
     public boolean delete(Integer id) {
+        if (id == null) {
+            throw new MenuCategoryInvalidDataException();
+        }
+
         if (!repo.existsById(id)) {
             throw new MenuCategoryNotFoundException();
         }

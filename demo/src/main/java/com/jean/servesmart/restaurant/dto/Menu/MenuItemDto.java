@@ -15,7 +15,7 @@ public class MenuItemDto {
     private Integer categoryId;
     private String categoryName;
 
-    // Getters & Setters
+
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
