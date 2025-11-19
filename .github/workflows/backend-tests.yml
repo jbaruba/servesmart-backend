@@ -20,6 +20,11 @@ jobs:
           java-version: "17"
           distribution: "temurin"
 
-      - name: Run unit tests with Maven
+   -
+      - name: Make mvnw executable
         working-directory: ./demo
-        run: mvnw -B test
+        run: chmod +x mvnw
+
+      - name: Run unit tests with Maven Wrapper
+        working-directory: ./demo
+        run: ./mvnw -B test
