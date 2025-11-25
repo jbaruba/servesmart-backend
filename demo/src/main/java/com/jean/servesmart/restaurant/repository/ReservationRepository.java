@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Integer> {
-  
+
     List<Reservation> findByRestaurantTable_IdAndEventDateTimeBetween(Integer tableId, LocalDateTime start, LocalDateTime end);
     boolean existsByRestaurantTable_IdAndEventDateTime(Integer tableId, LocalDateTime eventDateTime);
-    List<Reservation> findByStatus(String Status);
+    List<Reservation> findByStatus_Name(String status);
 }

@@ -40,8 +40,6 @@ public class MenuImpl implements MenuService {
         if (dto.getCategoryId() == null) {
             throw new MenuItemInvalidDataException();
         }
-
-        // category moet bestaan
         MenuCategory category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(MenuItemCategoryNotFoundException::new);
 
@@ -50,13 +48,10 @@ public class MenuImpl implements MenuService {
         }
 
         if (dto.getPrice() == null || dto.getPrice().doubleValue() < 0) {
-            // price mag niet negatief en niet null
             throw new MenuItemInvalidDataException();
         }
 
         String trimmedName = dto.getName().trim();
-
-        // naam moet uniek zijn BINNEN deze category
         if (menuRepo.existsByCategory_IdAndName(category.getId(), trimmedName)) {
             throw new MenuItemAlreadyExistsException();
         }
@@ -65,7 +60,6 @@ public class MenuImpl implements MenuService {
         item.setCategory(category);
         item.setName(trimmedName);
 
-        // description is optioneel
         if (dto.getDescription() != null) {
             String desc = dto.getDescription().trim();
             item.setDescription(desc.isEmpty() ? null : desc);
@@ -130,7 +124,6 @@ public class MenuImpl implements MenuService {
         MenuItems item = menuRepo.findById(id)
                 .orElseThrow(MenuItemNotFoundException::new);
 
-        // Doel-category: default = huidige category
         MenuCategory targetCategory = item.getCategory();
 
         if (dto.getCategoryId() != null) {
@@ -138,7 +131,6 @@ public class MenuImpl implements MenuService {
                     .orElseThrow(MenuItemCategoryNotFoundException::new);
         }
 
-        // name (optioneel, maar als meegegeven moet hij geldig zijn + uniek in targetCategory)
         if (dto.getName() != null) {
             if (dto.getName().isBlank()) {
                 throw new MenuItemInvalidDataException();
@@ -147,7 +139,6 @@ public class MenuImpl implements MenuService {
 
             Integer targetCatId = targetCategory.getId();
 
-            // alleen checken op conflict als naam of category verandert
             boolean nameChanged = !newName.equals(item.getName());
             boolean categoryChanged = !targetCatId.equals(item.getCategory().getId());
 
@@ -159,13 +150,11 @@ public class MenuImpl implements MenuService {
             item.setName(newName);
         }
 
-        // description: optioneel, mag leeg zijn
         if (dto.getDescription() != null) {
             String desc = dto.getDescription().trim();
             item.setDescription(desc.isEmpty() ? null : desc);
         }
 
-        // price: optioneel, maar als meegegeven mag hij niet negatief zijn
         if (dto.getPrice() != null) {
             if (dto.getPrice().doubleValue() < 0) {
                 throw new MenuItemInvalidDataException();
@@ -173,14 +162,12 @@ public class MenuImpl implements MenuService {
             item.setPrice(dto.getPrice());
         }
 
-        // flags worden altijd gezet uit DTO
         item.setActive(dto.isActive());
         item.setGluten(dto.isGluten());
         item.setNuts(dto.isNuts());
         item.setDairy(dto.isDairy());
         item.setAlcohol(dto.isAlcohol());
 
-        // eventueel gewijzigde category opslaan
         item.setCategory(targetCategory);
 
         MenuItems updated = menuRepo.save(item);

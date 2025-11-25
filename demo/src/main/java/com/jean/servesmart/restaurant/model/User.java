@@ -6,16 +6,17 @@ import java.util.List;
 
 @Entity
 @Table(name = "Users", uniqueConstraints = @UniqueConstraint(name = "UK_user_email", columnNames = "Email"))
-
 public class User {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @ManyToOne
+    @JoinColumn(name = "Role_id", nullable = false)
+    private Role role;
 
     @Column(name = "Email", nullable = false, length = 256)
     private String email;
-
-    @Column(name = "Role", nullable = false, length = 20)
-    private String role;
 
     @Column(name = "Password_hash", nullable = false, length = 255)
     private String passwordHash;
@@ -23,13 +24,13 @@ public class User {
     @Column(name = "First_name", nullable = false, length = 150)
     private String firstName;
 
-    @Column(name = "Last_name", nullable = false,  length = 150)
+    @Column(name = "Last_name", nullable = false, length = 150)
     private String lastName;
 
-    @Column(name = "Address", nullable = false,  length = 255)
+    @Column(name = "Address", nullable = false, length = 255)
     private String address;
 
-    @Column(name = "Phone_number", nullable = false,  length = 32)
+    @Column(name = "Phone_number", nullable = false, length = 32)
     private String phoneNumber;
 
     @Column(name = "Is_active", nullable = false)
@@ -47,11 +48,11 @@ public class User {
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
+
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
-
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
 
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }

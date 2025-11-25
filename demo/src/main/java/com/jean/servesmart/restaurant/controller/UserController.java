@@ -6,6 +6,7 @@ import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
 import com.jean.servesmart.restaurant.dto.User.UserUpdateDto;
 import com.jean.servesmart.restaurant.exception.user.InvalidPasswordChangeException;
 import com.jean.servesmart.restaurant.exception.user.UserEmailAlreadyUsedException;
+import com.jean.servesmart.restaurant.exception.user.UserInvalidDataException;
 import com.jean.servesmart.restaurant.exception.user.UserNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.UserService;
@@ -34,6 +35,9 @@ public class UserController {
             UserResponseDto user = users.register(dto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(user, "User registered successfully"));
+        } catch (UserInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid user data"));
         } catch (UserEmailAlreadyUsedException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Email already in use"));
@@ -67,6 +71,9 @@ public class UserController {
                         .body(ApiResponse.error("User not found"));
             }
             return ResponseEntity.ok(ApiResponse.success(user.get(), "User retrieved successfully"));
+        } catch (UserInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid user id"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to load user"));
@@ -82,6 +89,9 @@ public class UserController {
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("User not found"));
+        } catch (UserInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid user data"));
         } catch (UserEmailAlreadyUsedException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Email already in use"));
@@ -100,6 +110,9 @@ public class UserController {
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("User not found"));
+        } catch (UserInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid password change data"));
         } catch (InvalidPasswordChangeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Old password incorrect or new password invalid"));
@@ -114,9 +127,28 @@ public class UserController {
         try {
             boolean exists = users.emailExists(email);
             return ResponseEntity.ok(ApiResponse.success(exists, "Email existence check completed"));
+        } catch (UserInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid email"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to check email existence"));
         }
     }
+
+
+    @DeleteMapping("/{id}")
+public ResponseEntity<ApiResponse<?>> deleteUser(@PathVariable Integer id) {
+    try {
+        users.deleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "User deleted successfully"));
+    } catch (UserNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("User not found"));
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiResponse.error("Failed to delete user"));
+    }
+}
+
 }

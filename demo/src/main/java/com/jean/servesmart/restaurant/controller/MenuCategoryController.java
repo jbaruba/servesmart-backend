@@ -3,9 +3,11 @@ package com.jean.servesmart.restaurant.controller;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryCreateDto;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryResponseDto;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryUpdateDto;
+
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryAlreadyExistsException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryInvalidDataException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryNotFoundException;
+
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.MenuCategoryService;
 
@@ -49,11 +51,9 @@ public class MenuCategoryController {
     public ResponseEntity<ApiResponse<?>> getAll() {
         try {
             List<MenuCategoryResponseDto> list = service.getAll();
-
             String message = list.isEmpty()
                     ? "No categories found"
                     : "Categories loaded";
-
             return ResponseEntity.ok(ApiResponse.success(list, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

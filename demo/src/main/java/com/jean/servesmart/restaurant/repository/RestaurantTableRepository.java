@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface RestaurantTableRepository extends JpaRepository<RestaurantTable, Integer> {
     Optional<RestaurantTable> findByLabel(String label);
-    List<RestaurantTable> findByStatus(String status);
-    List<RestaurantTable> findByActiveTrue(); 
+    List<RestaurantTable> findByStatus_Name(String status);
+    List<RestaurantTable> findByActiveTrue();
 }

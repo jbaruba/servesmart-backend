@@ -5,10 +5,12 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-    name = "Reservation", indexes = @Index(name = "IX_Reservation_Table_Time", columnList = "Restaurant_table_id,Event_datetime")
+    name = "Reservation",
+    indexes = @Index(name = "IX_Reservation_Table_Time", columnList = "Restaurant_table_id,Event_datetime")
 )
 public class Reservation {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @ManyToOne(optional = false)
@@ -28,8 +30,10 @@ public class Reservation {
     @Column(name = "Event_datetime", nullable = false)
     private LocalDateTime eventDateTime;
 
-    @Column(name = "Status", nullable = false, length = 20)
-    private String status;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "ReservationStatus_id", nullable = false,
+        foreignKey = @ForeignKey(name = "FK_Reservation_Status"))
+    private ReservationStatus status;
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
@@ -49,6 +53,6 @@ public class Reservation {
     public LocalDateTime getEventDateTime() { return eventDateTime; }
     public void setEventDateTime(LocalDateTime eventDateTime) { this.eventDateTime = eventDateTime; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public ReservationStatus getStatus() { return status; }
+    public void setStatus(ReservationStatus status) { this.status = status; }
 }

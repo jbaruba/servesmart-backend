@@ -23,5 +23,8 @@ public class UserRegisterDto {
 
     private String address;
     private String phoneNumber;
-    private String role; 
+    private String role;
+
+    private Boolean active; 
+
 }

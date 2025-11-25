@@ -2,6 +2,7 @@ package com.jean.servesmart.restaurant.controller;
 
 import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
 import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
+import com.jean.servesmart.restaurant.exception.auth.AuthInvalidDataException;
 import com.jean.servesmart.restaurant.exception.auth.InactiveAccountException;
 import com.jean.servesmart.restaurant.exception.auth.InvalidCredentialsException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
@@ -27,6 +28,10 @@ public class AuthController {
         try {
             UserResponseDto user = auth.login(dto);
             return ResponseEntity.ok(ApiResponse.success(user, "Login successful"));
+
+        } catch (AuthInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Invalid login data"));
 
         } catch (InvalidCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

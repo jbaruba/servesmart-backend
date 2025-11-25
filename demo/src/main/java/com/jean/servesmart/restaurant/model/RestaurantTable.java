@@ -6,14 +6,17 @@ import java.util.List;
 @Entity
 @Table(name = "RestaurantTable", uniqueConstraints = @UniqueConstraint(name = "UK_table_label", columnNames = "Label"))
 public class RestaurantTable {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "Label", nullable = false, length = 100)
     private String label;
 
-    @Column(name = "Status", nullable = false, length = 20)
-    private String status;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "RestaurantTableStatus_id", nullable = false,
+        foreignKey = @ForeignKey(name = "FK_RestaurantTable_Status"))
+    private RestaurantTableStatus status;
 
     @Column(name = "Seats", nullable = false)
     private Integer seats;
@@ -33,8 +36,8 @@ public class RestaurantTable {
     public String getLabel() { return label; }
     public void setLabel(String label) { this.label = label; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public RestaurantTableStatus getStatus() { return status; }
+    public void setStatus(RestaurantTableStatus status) { this.status = status; }
 
     public Integer getSeats() { return seats; }
     public void setSeats(Integer seats) { this.seats = seats; }
