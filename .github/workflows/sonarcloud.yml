@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # ALLE commands hieronder draaien nu in ./demo
+    # Alles draait in de map ./demo (waar jouw pom.xml en mvnw staan)
     defaults:
       run:
         working-directory: ./demo
@@ -38,6 +38,9 @@ jobs:
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2
+
+      - name: Make mvnw executable
+        run: chmod +x mvnw
 
       - name: Build and analyze with SonarCloud
         env:
