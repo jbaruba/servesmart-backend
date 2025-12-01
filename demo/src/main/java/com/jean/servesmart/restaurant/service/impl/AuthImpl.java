@@ -31,7 +31,6 @@ public class AuthImpl implements AuthService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public UserResponseDto login(UserLoginDto dto) {
 
         if (dto == null) {
@@ -52,16 +51,13 @@ public class AuthImpl implements AuthService {
                 .orElseThrow(InvalidCredentialsException::new);
 
         if (!user.isActive()) {
-            logLogin(user.getId(), "INACTIVE_ACCOUNT");
             throw new InactiveAccountException();
         }
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
-            logLogin(user.getId(), "INVALID_PASSWORD");
             throw new InvalidCredentialsException();
         }
-
-        logLogin(user.getId(), "SUCCESS");
+        logLogin(user.getId(), "LOGIN_SUCCESS");
 
         return toResponse(user);
     }

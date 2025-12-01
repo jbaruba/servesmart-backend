@@ -45,10 +45,11 @@ public class LoginLogImpl implements LoginLogService {
         User user = userRepo.findById(dto.getUserId())
                 .orElseThrow(LoginLogUserNotFoundException::new);
 
+        String normalizedStatus = dto.getStatus().trim().toUpperCase();
+
         LoginLog log = new LoginLog();
         log.setUser(user);
-        log.setStatus(dto.getStatus().trim());
-        // date wordt automatisch gezet in entity default
+        log.setStatus(normalizedStatus);
 
         logRepo.save(log);
     }
@@ -67,6 +68,12 @@ public class LoginLogImpl implements LoginLogService {
 
         return logRepo.findByUser_IdOrderByDateDesc(userId)
                 .stream()
+                .filter(l -> {
+                    String s = l.getStatus();
+                    if (s == null) return false;
+                    String up = s.trim().toUpperCase();
+                    return "LOGIN_SUCCESS".equals(up) || "LOGOUT".equals(up);
+                })
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
