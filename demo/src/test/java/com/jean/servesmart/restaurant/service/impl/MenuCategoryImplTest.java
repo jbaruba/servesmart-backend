@@ -80,9 +80,11 @@ class MenuCategoryImplTest {
     void Create_WhenPositionIsNullOrNegative() {
         MenuCategoryCreateDto dtoNullPos = createDto("Drinks", null, true);
         MenuCategoryCreateDto dtoNegPos = createDto("Drinks", -1, true);
+
         assertThrows(MenuCategoryInvalidDataException.class,
                 () -> service.create(dtoNullPos));
         assertThrows(MenuCategoryInvalidDataException.class,
+
                 () -> service.create(dtoNegPos));
         verifyNoInteractions(repo);
     }

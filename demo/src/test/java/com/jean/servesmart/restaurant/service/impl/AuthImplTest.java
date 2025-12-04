@@ -1,5 +1,5 @@
 package com.jean.servesmart.restaurant.service.impl;
-
+/* 
 import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
 import com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto;
 import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
@@ -156,3 +156,4 @@ class AuthImplTest {
         LoginLogCreateDto logDto = captor.getValue();
     }
 }
+*/

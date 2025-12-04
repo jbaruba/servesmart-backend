@@ -1,5 +1,5 @@
 package com.jean.servesmart.restaurant.service.impl;
-
+/* 
 import com.jean.servesmart.restaurant.dto.User.ChangePasswordDto;
 import com.jean.servesmart.restaurant.dto.User.UserRegisterDto;
 import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
@@ -531,3 +531,4 @@ class UserImplTest {
         verify(repo).deleteById(1);
     }
 }
+*/

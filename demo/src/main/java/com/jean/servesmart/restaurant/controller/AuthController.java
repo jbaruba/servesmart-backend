@@ -1,5 +1,6 @@
 package com.jean.servesmart.restaurant.controller;
 
+import com.jean.servesmart.restaurant.dto.Auth.AuthResponseDto;
 import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
 import com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto;
 import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
@@ -31,8 +32,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody UserLoginDto dto) {
         try {
-            UserResponseDto user = auth.login(dto);
-            return ResponseEntity.ok(ApiResponse.success(user, "Login successful"));
+            AuthResponseDto authResponse = auth.login(dto);
+            return ResponseEntity.ok(ApiResponse.success(authResponse, "Login successful"));
 
         } catch (AuthInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

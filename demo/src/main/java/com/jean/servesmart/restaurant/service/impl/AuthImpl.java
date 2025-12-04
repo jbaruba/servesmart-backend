@@ -1,5 +1,6 @@
 package com.jean.servesmart.restaurant.service.impl;
 
+import com.jean.servesmart.restaurant.dto.Auth.AuthResponseDto;
 import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
 import com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto;
 import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
@@ -9,6 +10,7 @@ import com.jean.servesmart.restaurant.exception.auth.InvalidCredentialsException
 import com.jean.servesmart.restaurant.model.User;
 import com.jean.servesmart.restaurant.repository.UserRepository;
 import com.jean.servesmart.restaurant.service.interfaces.AuthService;
+import com.jean.servesmart.restaurant.service.interfaces.JwtService;
 import com.jean.servesmart.restaurant.service.interfaces.LoginLogService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,17 +23,20 @@ public class AuthImpl implements AuthService {
     private final UserRepository repo;
     private final BCryptPasswordEncoder passwordEncoder;
     private final LoginLogService loginLogService;
+    private final JwtService jwtService;
 
     public AuthImpl(UserRepository repo,
                     BCryptPasswordEncoder passwordEncoder,
-                    LoginLogService loginLogService) {
+                    LoginLogService loginLogService,
+                    JwtService jwtService) {
         this.repo = repo;
         this.passwordEncoder = passwordEncoder;
         this.loginLogService = loginLogService;
+        this.jwtService = jwtService;
     }
 
     @Override
-    public UserResponseDto login(UserLoginDto dto) {
+    public AuthResponseDto login(UserLoginDto dto) {
 
         if (dto == null) {
             throw new AuthInvalidDataException();
@@ -57,9 +62,17 @@ public class AuthImpl implements AuthService {
         if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
             throw new InvalidCredentialsException();
         }
+
         logLogin(user.getId(), "LOGIN_SUCCESS");
 
-        return toResponse(user);
+        UserResponseDto userDto = toResponse(user);
+        String token = jwtService.generateToken(user);
+
+        AuthResponseDto authResponse = new AuthResponseDto();
+        authResponse.setUser(userDto);
+        authResponse.setToken(token);
+
+        return authResponse;
     }
 
     private void logLogin(Integer userId, String status) {
