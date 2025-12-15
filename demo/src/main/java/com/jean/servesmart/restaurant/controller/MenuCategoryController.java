@@ -11,6 +11,7 @@ import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryNotFoun
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.MenuCategoryService;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,7 @@ public class MenuCategoryController {
     }
 
     @PostMapping
+    @RolesAllowed({"ADMIN", "STAFF"})
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody MenuCategoryCreateDto dto) {
         try {
             MenuCategoryResponseDto category = service.create(dto);
