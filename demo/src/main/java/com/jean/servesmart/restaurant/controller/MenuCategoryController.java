@@ -31,7 +31,6 @@ public class MenuCategoryController {
     }
 
     @PostMapping
-    @RolesAllowed({"ADMIN", "STAFF"})
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody MenuCategoryCreateDto dto) {
         try {
             MenuCategoryResponseDto category = service.create(dto);
