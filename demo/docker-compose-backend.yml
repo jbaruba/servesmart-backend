@@ -1,0 +1,45 @@
+services:
+  servesmart-db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: servesmart-db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Aa123456!"
+    ports:
+      - "14333:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+      - ./db/init:/init
+    healthcheck:
+      test: /bin/bash -c "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$$SA_PASSWORD\" -Q \"SELECT 1\""
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      servesmart-db:
+        condition: service_healthy
+    volumes:
+      - ./db/init:/init
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      "/opt/mssql-tools18/bin/sqlcmd -C -S servesmart-db -U sa -P \"Aa123456!\" -i /init/00-init.sql"
+    restart: "no"
+
+  servesmart-backend:
+    image: ghcr.io/jbaruba/servesmart-backend:latest
+    container_name: servesmart-backend
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:sqlserver://servesmart-db:1433;databaseName=servesmart_java_entitie;encrypt=true;trustServerCertificate=true"
+      SPRING_DATASOURCE_USERNAME: "sa"
+      SPRING_DATASOURCE_PASSWORD: "Aa123456!"
+
+volumes:
+  sql_data:
