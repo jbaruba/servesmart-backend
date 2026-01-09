@@ -34,14 +34,6 @@ jobs:
             ghcr.io/jbaruba/servesmart-backend:latest
             ghcr.io/jbaruba/servesmart-backend:${{ github.sha }}
 
-      - name: Build & push frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./frontend
-          push: true
-          tags: |
-            ghcr.io/jbaruba/servesmart-frontend:latest
-            ghcr.io/jbaruba/servesmart-frontend:${{ github.sha }}
 
   deploy:
     needs: build-and-push
