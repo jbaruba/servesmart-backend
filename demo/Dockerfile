@@ -5,6 +5,7 @@ WORKDIR /app
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
+COPY checkstyle.xml .
 
 RUN chmod +x mvnw
 
