@@ -28,7 +28,7 @@ jobs:
       - name: Build & push backend
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./demo
           push: true
           tags: |
             ghcr.io/jbaruba/servesmart-backend:latest
