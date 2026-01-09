@@ -1,6 +1,7 @@
 package com.jean.servesmart.restaurant.controller;
 
 import com.jean.servesmart.restaurant.dto.Order.OrderCreateDto;
+import com.jean.servesmart.restaurant.dto.Order.OrderItemCreateDto;
 import com.jean.servesmart.restaurant.dto.Order.OrderResponseDto;
 import com.jean.servesmart.restaurant.dto.Order.OrderStatusUpdateDto;
 import com.jean.servesmart.restaurant.exception.order.OrderInvalidDataException;
@@ -11,7 +12,7 @@ import com.jean.servesmart.restaurant.exception.order.OrderStatusNotFoundExcepti
 import com.jean.servesmart.restaurant.exception.order.OrderUserNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.OrderService;
-
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,39 +31,35 @@ public class OrderController {
         this.orders = orders;
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @PostMapping
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody OrderCreateDto dto) {
         try {
             OrderResponseDto order = orders.create(dto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(order, "Order created successfully"));
-
         } catch (OrderInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid order data"));
-
         } catch (OrderUserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("User not found"));
-
         } catch (OrderRestaurantTableNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Restaurant table not found"));
-
         } catch (OrderMenuItemNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("One or more menu items not found"));
-
         } catch (OrderStatusNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Order status not found"));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to create order"));
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
         try {
@@ -72,101 +69,208 @@ public class OrderController {
                         .body(ApiResponse.error("Order not found"));
             }
             return ResponseEntity.ok(ApiResponse.success(order.get(), "Order retrieved successfully"));
-
         } catch (OrderInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid order id"));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to load order"));
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/table/{tableId}")
     public ResponseEntity<ApiResponse<?>> getByTable(@PathVariable Integer tableId) {
         try {
             List<OrderResponseDto> list = orders.getByTable(tableId);
-
-            String message = list.isEmpty()
-                    ? "No orders found for table"
-                    : "Orders retrieved successfully";
-
+            String message = list.isEmpty() ? "No orders found for table" : "Orders retrieved successfully";
             return ResponseEntity.ok(ApiResponse.success(list, message));
-
         } catch (OrderInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid table id"));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to load orders"));
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<?>> getByStatus(@PathVariable String status) {
         try {
             List<OrderResponseDto> list = orders.getByStatus(status);
-
-            String message = list.isEmpty()
-                    ? "No orders found for status"
-                    : "Orders retrieved successfully";
-
+            String message = list.isEmpty() ? "No orders found for status" : "Orders retrieved successfully";
             return ResponseEntity.ok(ApiResponse.success(list, message));
-
         } catch (OrderInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid status"));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to load orders"));
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @PatchMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable Integer id,
-                                                       @Valid @RequestBody OrderStatusUpdateDto dto) {
+    public ResponseEntity<ApiResponse<?>> updateStatus(@PathVariable Integer id, @Valid @RequestBody OrderStatusUpdateDto dto) {
         try {
             OrderResponseDto updated = orders.updateStatus(id, dto);
             return ResponseEntity.ok(ApiResponse.success(updated, "Order status updated successfully"));
-
         } catch (OrderNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Order not found"));
-
         } catch (OrderInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid order status update data"));
-
         } catch (OrderStatusNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Order status not found"));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to update order status"));
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable Integer id) {
         try {
             orders.delete(id);
             return ResponseEntity.ok(ApiResponse.success(null, "Order deleted successfully"));
-
         } catch (OrderNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Order not found"));
-
         } catch (OrderInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid order id"));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to delete order"));
+        }
+    }
+
+    @RolesAllowed({"ADMIN", "STAFF"})
+    @PostMapping("/{orderId}/items")
+    public ResponseEntity<ApiResponse<?>> addItem(@PathVariable Integer orderId, @Valid @RequestBody OrderItemCreateDto dto) {
+        try {
+            OrderResponseDto updated = orders.addItem(orderId, dto);
+            return ResponseEntity.ok(ApiResponse.success(updated, "Item added successfully"));
+        } catch (OrderInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Invalid order item data"));
+        } catch (OrderNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Order not found"));
+        } catch (OrderMenuItemNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Menu item not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Failed to add item"));
+        }
+    }
+
+    @RolesAllowed({"ADMIN", "STAFF"})
+    @PutMapping("/{orderId}/items/{itemId}")
+    public ResponseEntity<ApiResponse<?>> updateItem(
+            @PathVariable Integer orderId,
+            @PathVariable Integer itemId,
+            @Valid @RequestBody com.jean.servesmart.restaurant.dto.Order.OrderItemUpdateDto dto
+    ) {
+        try {
+            OrderResponseDto updated = orders.updateItem(orderId, itemId, dto);
+            return ResponseEntity.ok(ApiResponse.success(updated, "Item updated successfully"));
+        } catch (OrderInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Invalid update data"));
+        } catch (OrderNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Order not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Failed to update item"));
+        }
+    }
+
+    @RolesAllowed({"ADMIN", "STAFF"})
+    @DeleteMapping("/{orderId}/items/{itemId}")
+    public ResponseEntity<ApiResponse<?>> removeItem(@PathVariable Integer orderId, @PathVariable Integer itemId) {
+        try {
+            OrderResponseDto updated = orders.removeItem(orderId, itemId);
+            return ResponseEntity.ok(ApiResponse.success(updated, "Item removed successfully"));
+        } catch (OrderInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Invalid ids"));
+        } catch (OrderNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Order not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Failed to remove item"));
+        }
+    }
+
+    @RolesAllowed({"ADMIN", "STAFF"})
+    @GetMapping("/paid")
+    public ResponseEntity<ApiResponse<?>> getPaidOrders() {
+        try {
+            return ResponseEntity.ok(ApiResponse.success(orders.getPaid(), "Paid orders retrieved"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Failed to load paid orders"));
+        }
+    }
+
+    @RolesAllowed({"ADMIN", "STAFF"})
+    @GetMapping("/open-by-table")
+    public ResponseEntity<ApiResponse<?>> getOpenOrdersByTable() {
+        try {
+            return ResponseEntity.ok(ApiResponse.success(orders.getOpenByTable(), "Open orders retrieved"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Failed to load open orders"));
+        }
+    }
+
+    @RolesAllowed({"ADMIN", "STAFF"})
+    @PostMapping("/start")
+    public ResponseEntity<ApiResponse<?>> start(@RequestBody StartOrderRequest dto) {
+        try {
+            OrderResponseDto order = orders.start(dto.getUserId(), dto.getRestaurantTableId());
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success(order, "Order started"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to start order"));
+        }
+    }
+
+    public static class StartOrderRequest {
+        private Integer userId;
+        private Integer restaurantTableId;
+
+        public Integer getUserId() {
+            return userId;
+        }
+
+        public void setUserId(Integer userId) {
+            this.userId = userId;
+        }
+
+        public Integer getRestaurantTableId() {
+            return restaurantTableId;
+        }
+
+        public void setRestaurantTableId(Integer restaurantTableId) {
+            this.restaurantTableId = restaurantTableId;
+        }
+    }
+
+    @RolesAllowed({"ADMIN", "STAFF"})
+    @PostMapping("/{orderId}/pay")
+    public ResponseEntity<ApiResponse<?>> pay(
+            @PathVariable Integer orderId,
+            @Valid @RequestBody com.jean.servesmart.restaurant.dto.Order.PayOrderDto dto
+    ) {
+        try {
+            OrderResponseDto updated = orders.pay(orderId, dto);
+            return ResponseEntity.ok(ApiResponse.success(updated, "Order paid successfully"));
+        } catch (OrderNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Order not found"));
+        } catch (OrderInvalidDataException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Invalid payment data"));
+        } catch (OrderStatusNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error("Order status not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ApiResponse.error("Failed to pay order"));
         }
     }
 }

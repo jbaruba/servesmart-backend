@@ -3,14 +3,11 @@ package com.jean.servesmart.restaurant.controller;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryCreateDto;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryResponseDto;
 import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryUpdateDto;
-
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryAlreadyExistsException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryInvalidDataException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryNotFoundException;
-
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.MenuCategoryService;
-
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -30,6 +27,7 @@ public class MenuCategoryController {
         this.service = service;
     }
 
+    @RolesAllowed("ADMIN")
     @PostMapping
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody MenuCategoryCreateDto dto) {
         try {
@@ -48,13 +46,12 @@ public class MenuCategoryController {
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
         try {
             List<MenuCategoryResponseDto> list = service.getAll();
-            String message = list.isEmpty()
-                    ? "No categories found"
-                    : "Categories loaded";
+            String message = list.isEmpty() ? "No categories found" : "Categories loaded";
             return ResponseEntity.ok(ApiResponse.success(list, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -62,6 +59,7 @@ public class MenuCategoryController {
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
         try {
@@ -77,9 +75,9 @@ public class MenuCategoryController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id,
-                                                 @RequestBody MenuCategoryUpdateDto dto) {
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @RequestBody MenuCategoryUpdateDto dto) {
         try {
             MenuCategoryResponseDto updated = service.update(id, dto);
             return ResponseEntity.ok(ApiResponse.success(updated, "Category updated successfully"));
@@ -98,6 +96,7 @@ public class MenuCategoryController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable Integer id) {
         try {
@@ -115,15 +114,12 @@ public class MenuCategoryController {
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/active")
     public ResponseEntity<ApiResponse<?>> getActive() {
         try {
             List<MenuCategoryResponseDto> list = service.getActive();
-
-            String message = list.isEmpty()
-                    ? "No active categories found"
-                    : "Active categories retrieved";
-
+            String message = list.isEmpty() ? "No active categories found" : "Active categories retrieved";
             return ResponseEntity.ok(ApiResponse.success(list, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

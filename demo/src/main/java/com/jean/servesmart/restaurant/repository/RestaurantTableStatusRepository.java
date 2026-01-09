@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface RestaurantTableStatusRepository extends JpaRepository<RestaurantTableStatus, Integer> {
     Optional<RestaurantTableStatus> findByName(String name);
+    Optional<RestaurantTableStatus> findStatusByName(String name);
 }
+

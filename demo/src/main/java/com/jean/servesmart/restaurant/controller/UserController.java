@@ -10,7 +10,7 @@ import com.jean.servesmart.restaurant.exception.user.UserInvalidDataException;
 import com.jean.servesmart.restaurant.exception.user.UserNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.UserService;
-
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +29,7 @@ public class UserController {
         this.users = users;
     }
 
+    @RolesAllowed("ADMIN")
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody UserRegisterDto dto) {
         try {
@@ -47,14 +48,12 @@ public class UserController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
         try {
             List<UserResponseDto> list = users.getAll();
-
-            String message = list.isEmpty()
-                    ? "No users found"
-                    : "Users retrieved successfully";
+            String message = list.isEmpty() ? "No users found" : "Users retrieved successfully";
             return ResponseEntity.ok(ApiResponse.success(list, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -62,6 +61,7 @@ public class UserController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
         try {
@@ -80,9 +80,9 @@ public class UserController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id,
-                                                 @Valid @RequestBody UserUpdateDto dto) {
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @Valid @RequestBody UserUpdateDto dto) {
         try {
             UserResponseDto updated = users.updateProfile(id, dto);
             return ResponseEntity.ok(ApiResponse.success(updated, "User updated successfully"));
@@ -101,9 +101,9 @@ public class UserController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @PatchMapping("/{id}/password")
-    public ResponseEntity<ApiResponse<?>> changePassword(@PathVariable Integer id,
-                                                         @Valid @RequestBody ChangePasswordDto dto) {
+    public ResponseEntity<ApiResponse<?>> changePassword(@PathVariable Integer id, @Valid @RequestBody ChangePasswordDto dto) {
         try {
             users.changePassword(id, dto);
             return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
@@ -122,6 +122,7 @@ public class UserController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @GetMapping("/email-exists")
     public ResponseEntity<ApiResponse<?>> emailExists(@RequestParam String email) {
         try {
@@ -136,19 +137,18 @@ public class UserController {
         }
     }
 
-
+    @RolesAllowed("ADMIN")
     @DeleteMapping("/{id}")
-public ResponseEntity<ApiResponse<?>> deleteUser(@PathVariable Integer id) {
-    try {
-        users.deleteUser(id);
-        return ResponseEntity.ok(ApiResponse.success(null, "User deleted successfully"));
-    } catch (UserNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("User not found"));
-    } catch (Exception e) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Failed to delete user"));
+    public ResponseEntity<ApiResponse<?>> deleteUser(@PathVariable Integer id) {
+        try {
+            users.deleteUser(id);
+            return ResponseEntity.ok(ApiResponse.success(null, "User deleted successfully"));
+        } catch (UserNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("User not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to delete user"));
+        }
     }
-}
-
 }

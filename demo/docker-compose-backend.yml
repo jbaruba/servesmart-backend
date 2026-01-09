@@ -1,3 +1,11 @@
+# start de compose command: docker compose -f docker-compose-backend.yml up -d
+# stopt de container : docker compose -f docker-compose-backend.yml stop
+# als je nieuwe backend code hebt gebruikt dit om nieuweste image draaien :
+                                                                            # docker compose -f docker-compose-backend.yml pull
+                                                                            # docker compose -f docker-compose-backend.yml up -d
+# start en pull latest image command: docker compose -f docker-compose-backend.yml up -d --pull always
+
+
 services:
   servesmart-db:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -25,7 +33,8 @@ services:
       - ./db/init:/init
     entrypoint: ["/bin/bash", "-c"]
     command: >
-      "/opt/mssql-tools18/bin/sqlcmd -C -S servesmart-db -U sa -P \"Aa123456!\" -i /init/00-init.sql"
+      "/opt/mssql-tools18/bin/sqlcmd -C -S servesmart-db -U sa -P \"Aa123456!\" -Q \"IF NOT EXISTS (SELECT 1 FROM servesmart_java_entitie.sys.tables) BEGIN PRINT 'INIT RUNNING' END\" &&
+       /opt/mssql-tools18/bin/sqlcmd -C -S servesmart-db -U sa -P \"Aa123456!\" -d master -i /init/00-init.sql || true"
     restart: "no"
 
   servesmart-backend:

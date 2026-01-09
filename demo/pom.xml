@@ -28,7 +28,6 @@
     </sonar.coverage.jacoco.xmlReportPaths>
   </properties>
 
-  <!-- for rest API -->
   <dependencies>
 
     <dependency>
@@ -41,19 +40,17 @@
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
 
-    <!-- JPA + Hibernate -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
 
-    <!-- security for bcrypt-->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
 
-    <!-- JWT token -->
+    <!-- JWT -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
@@ -72,13 +69,11 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- to be able use validation in dto's -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
-    <!-- SQL Server JDBC driver -->
     <dependency>
       <groupId>com.microsoft.sqlserver</groupId>
       <artifactId>mssql-jdbc</artifactId>
@@ -99,16 +94,17 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+
   </dependencies>
 
   <build>
     <plugins>
+
       <!-- Java compiler -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -132,19 +128,17 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
 
-      <!-- JaCoCo voor code coverage -->
+      <!-- JaCoCo -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>0.8.10</version>
         <executions>
-          <!-- agent voorbereiden zodat tests coverage meten -->
           <execution>
             <goals>
               <goal>prepare-agent</goal>
             </goals>
           </execution>
-          <!-- XML rapport maken na de tests -->
           <execution>
             <id>report</id>
             <phase>test</phase>
@@ -155,12 +149,38 @@
         </executions>
       </plugin>
 
-      <!-- SonarQube Maven scanner -->
+      <!-- ✅ CHECKSTYLE (LINTING) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.3.1</version>
+
+        <executions>
+          <execution>
+            <id>checkstyle-validate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+
+        <configuration>
+          <configLocation>checkstyle.xml</configLocation>
+          <inputEncoding>UTF-8</inputEncoding>
+          <consoleOutput>true</consoleOutput>
+          <failsOnError>true</failsOnError>
+        </configuration>
+      </plugin>
+
+      <!-- Sonar -->
       <plugin>
         <groupId>org.sonarsource.scanner.maven</groupId>
         <artifactId>sonar-maven-plugin</artifactId>
         <version>3.9.1.2184</version>
       </plugin>
+
     </plugins>
   </build>
+
 </project>

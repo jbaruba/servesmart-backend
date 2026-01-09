@@ -7,7 +7,7 @@ import com.jean.servesmart.restaurant.exception.menuitem.MenuItemInvalidDataExce
 import com.jean.servesmart.restaurant.exception.menuitem.MenuItemNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;
 import com.jean.servesmart.restaurant.service.interfaces.MenuService;
-
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +26,7 @@ public class MenuController {
         this.service = service;
     }
 
+    @RolesAllowed("ADMIN")
     @PostMapping
     public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody MenuItemDto dto) {
         try {
@@ -47,14 +48,12 @@ public class MenuController {
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping
     public ResponseEntity<ApiResponse<?>> getAll() {
         try {
             List<MenuItemDto> items = service.getAll();
-
-            String message = items.isEmpty()
-                    ? "No menu items found"
-                    : "Menu items loaded";
+            String message = items.isEmpty() ? "No menu items found" : "Menu items loaded";
             return ResponseEntity.ok(ApiResponse.success(items, message));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -62,6 +61,7 @@ public class MenuController {
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
         try {
@@ -80,14 +80,12 @@ public class MenuController {
         }
     }
 
+    @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<ApiResponse<?>> getByCategory(@PathVariable Integer categoryId) {
         try {
             List<MenuItemDto> list = service.getByCategory(categoryId);
-
-            String message = list.isEmpty()
-                    ? "No menu items for this category"
-                    : "Menu items retrieved";
+            String message = list.isEmpty() ? "No menu items for this category" : "Menu items retrieved";
             return ResponseEntity.ok(ApiResponse.success(list, message));
         } catch (MenuItemInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -98,9 +96,9 @@ public class MenuController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id,
-                                                 @RequestBody MenuItemDto dto) {
+    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @RequestBody MenuItemDto dto) {
         try {
             MenuItemDto updated = service.update(id, dto);
             return ResponseEntity.ok(ApiResponse.success(updated, "Menu item updated successfully"));
@@ -122,6 +120,7 @@ public class MenuController {
         }
     }
 
+    @RolesAllowed("ADMIN")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<?>> delete(@PathVariable Integer id) {
         try {

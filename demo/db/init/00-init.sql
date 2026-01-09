@@ -1,3 +1,6 @@
+-- Let op: dit script wordt uitgevoerd via sqlcmd 
+-- Database aanmaken als hij niet bestaat
+
 IF DB_ID(N'servesmart_java_entitie') IS NULL
 BEGIN
     CREATE DATABASE servesmart_java_entitie;
