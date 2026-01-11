@@ -1,5 +1,5 @@
 package com.jean.servesmart.restaurant.service.impl;
-/* 
+
 import com.jean.servesmart.restaurant.dto.User.ChangePasswordDto;
 import com.jean.servesmart.restaurant.dto.User.UserRegisterDto;
 import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
@@ -12,15 +12,14 @@ import com.jean.servesmart.restaurant.model.Role;
 import com.jean.servesmart.restaurant.model.User;
 import com.jean.servesmart.restaurant.repository.RoleRepository;
 import com.jean.servesmart.restaurant.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,498 +36,618 @@ class UserImplTest {
     private RoleRepository roleRepo;
 
     @Mock
-    private BCryptPasswordEncoder encoder;
+    private BCryptPasswordEncoder passwordEncoder;
 
-    @InjectMocks
     private UserImpl service;
 
-    // ===== Helpers =====
+    @BeforeEach
+    void setup() {
+        service = new UserImpl(repo, roleRepo, passwordEncoder);
+    }
 
-    private UserRegisterDto regDto(String email, String pass, String roleName) {
+    @Test
+    void register_whenDtoIsNull_throwsUserInvalidDataException() {
+        assertThrows(UserInvalidDataException.class, () -> service.register(null));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
+    }
+
+    @Test
+    void register_whenEmailIsNull_throwsUserInvalidDataException() {
         UserRegisterDto dto = new UserRegisterDto();
-        dto.setEmail(email);
-        dto.setPassword(pass);
-        dto.setFirstName("Jean");
-        dto.setLastName("Tester");
-        dto.setAddress("Street 1");
-        dto.setPhoneNumber("12345");
-        dto.setRole(roleName);
-        dto.setActive(true);
-        return dto;
-    }
+        dto.setEmail(null);
+        dto.setPassword("pass");
+        dto.setRole("ADMIN");
 
-    private UserUpdateDto updateDto(String email, String first, String last,
-                                   String address, String phone, Boolean active, String role) {
-        UserUpdateDto dto = new UserUpdateDto();
-        dto.setEmail(email);
-        dto.setFirstName(first);
-        dto.setLastName(last);
-        dto.setAddress(address);
-        dto.setPhoneNumber(phone);
-        dto.setActive(active);
-        dto.setRole(role);
-        return dto;
-    }
-
-    private ChangePasswordDto cpDto(String oldPass, String newPass) {
-        ChangePasswordDto dto = new ChangePasswordDto();
-        dto.setOldPassword(oldPass);
-        dto.setNewPassword(newPass);
-        return dto;
-    }
-
-    private Role role(String name) {
-        Role r = new Role();
-        r.setName(name);
-        return r;
-    }
-
-    private User user(Integer id, String email, String hash, Role role, boolean active) {
-        User u = new User();
-        u.setId(id);
-        u.setEmail(email);
-        u.setPasswordHash(hash);
-        u.setFirstName("Jean");
-        u.setLastName("Tester");
-        u.setAddress("Street 1");
-        u.setPhoneNumber("12345");
-        u.setRole(role);
-        u.setActive(active);
-        return u;
-    }
-
-    // ===== register() tests =====
-
-    @Test
-    void register_shouldThrowInvalid_whenDtoNull() {
-        assertThrows(UserInvalidDataException.class,
-                () -> service.register(null));
+        assertThrows(UserInvalidDataException.class, () -> service.register(dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void register_shouldThrowInvalid_whenEmailBlank() {
-        UserRegisterDto dto = regDto("   ", "pw", "ADMIN");
-        assertThrows(UserInvalidDataException.class,
-                () -> service.register(dto));
+    void register_whenEmailIsBlank_throwsUserInvalidDataException() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("   ");
+        dto.setPassword("pass");
+        dto.setRole("ADMIN");
+
+        assertThrows(UserInvalidDataException.class, () -> service.register(dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void register_shouldThrowInvalid_whenPasswordBlank() {
-        UserRegisterDto dto = regDto("mail@mail.com", "  ", "ADMIN");
-        assertThrows(UserInvalidDataException.class,
-                () -> service.register(dto));
+    void register_whenPasswordIsNull_throwsUserInvalidDataException() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword(null);
+        dto.setRole("ADMIN");
+
+        assertThrows(UserInvalidDataException.class, () -> service.register(dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void register_shouldThrowInvalid_whenRoleBlank() {
-        UserRegisterDto dto = regDto("mail@mail.com", "pw", " ");
-        assertThrows(UserInvalidDataException.class,
-                () -> service.register(dto));
+    void register_whenPasswordIsBlank_throwsUserInvalidDataException() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("   ");
+        dto.setRole("ADMIN");
+
+        assertThrows(UserInvalidDataException.class, () -> service.register(dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void register_shouldThrowEmailExists_whenEmailAlreadyUsed() {
-        UserRegisterDto dto = regDto("mail@mail.com", "pw", "ADMIN");
+    void register_whenRoleIsNull_throwsUserInvalidDataException() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("pass");
+        dto.setRole(null);
 
-        when(repo.existsByEmail("mail@mail.com")).thenReturn(true);
+        assertThrows(UserInvalidDataException.class, () -> service.register(dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
+    }
 
-        assertThrows(UserEmailAlreadyUsedException.class,
-                () -> service.register(dto));
+    @Test
+    void register_whenRoleIsBlank_throwsUserInvalidDataException() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("pass");
+        dto.setRole("   ");
 
-        verify(repo).existsByEmail("mail@mail.com");
+        assertThrows(UserInvalidDataException.class, () -> service.register(dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
+    }
+
+    @Test
+    void register_whenEmailAlreadyExists_throwsUserEmailAlreadyUsedException() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("  test@example.com  ");
+        dto.setPassword("pass");
+        dto.setRole("ADMIN");
+
+        when(repo.existsByEmail("test@example.com")).thenReturn(true);
+
+        assertThrows(UserEmailAlreadyUsedException.class, () -> service.register(dto));
+
+        verify(repo).existsByEmail("test@example.com");
+        verifyNoInteractions(roleRepo, passwordEncoder);
         verifyNoMoreInteractions(repo);
     }
 
     @Test
-    void register_shouldThrowInvalid_whenRoleNotFound() {
-        UserRegisterDto dto = regDto("mail@mail.com", "pw", "ADMIN");
+    void register_whenRoleNotFound_throwsUserInvalidDataException() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("pass");
+        dto.setRole("admin");
 
-        when(repo.existsByEmail("mail@mail.com")).thenReturn(false);
+        when(repo.existsByEmail("test@example.com")).thenReturn(false);
         when(roleRepo.findByName("ADMIN")).thenReturn(Optional.empty());
 
-        assertThrows(UserInvalidDataException.class,
-                () -> service.register(dto));
+        assertThrows(UserInvalidDataException.class, () -> service.register(dto));
 
-        verify(repo).existsByEmail("mail@mail.com");
+        verify(repo).existsByEmail("test@example.com");
         verify(roleRepo).findByName("ADMIN");
+        verifyNoInteractions(passwordEncoder);
     }
 
     @Test
-    void register_shouldCreateUserAndReturnDto_whenValid() {
-        UserRegisterDto dto = regDto("mail@mail.com", "pw", "ADMIN");
+    void register_whenActiveNull_defaultsToTrue() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("pass");
+        dto.setRole("ADMIN");
+        dto.setFirstName("Jean");
+        dto.setLastName("Baruba");
+        dto.setAddress("Street 1");
+        dto.setPhoneNumber("0612345678");
+        dto.setActive(null);
 
-        when(repo.existsByEmail("mail@mail.com")).thenReturn(false);
+        Role role = new Role();
+        role.setName("ADMIN");
 
-        Role admin = role("ADMIN");
-        when(roleRepo.findByName("ADMIN")).thenReturn(Optional.of(admin));
+        when(repo.existsByEmail("test@example.com")).thenReturn(false);
+        when(roleRepo.findByName("ADMIN")).thenReturn(Optional.of(role));
+        when(passwordEncoder.encode("pass")).thenReturn("hashed");
 
-        when(encoder.encode("pw")).thenReturn("hashed");
-
-        User saved = user(10, "mail@mail.com", "hashed", admin, true);
-        when(repo.save(any(User.class))).thenReturn(saved);
+        when(repo.save(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(10);
+            return u;
+        });
 
         UserResponseDto result = service.register(dto);
 
         assertNotNull(result);
         assertEquals(10, result.getId());
-        assertEquals("mail@mail.com", result.getEmail());
+        assertEquals("test@example.com", result.getEmail());
         assertEquals("ADMIN", result.getRole());
         assertTrue(result.isActive());
 
-        verify(repo).existsByEmail("mail@mail.com");
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(repo).save(captor.capture());
+        assertEquals("test@example.com", captor.getValue().getEmail());
+        assertEquals("hashed", captor.getValue().getPasswordHash());
+        assertTrue(captor.getValue().isActive());
+        assertNotNull(captor.getValue().getRole());
+
+        verify(repo).existsByEmail("test@example.com");
         verify(roleRepo).findByName("ADMIN");
-        verify(encoder).encode("pw");
-        verify(repo).save(any(User.class));
-    }
-
-    // ===== getById() tests =====
-
-    @Test
-    void getById_shouldThrowInvalid_whenIdNull() {
-        assertThrows(UserInvalidDataException.class,
-                () -> service.getById(null));
+        verify(passwordEncoder).encode("pass");
     }
 
     @Test
-    void getById_shouldReturnEmpty_whenUserNotFound() {
+    void register_whenActiveProvided_usesProvidedValue() {
+        UserRegisterDto dto = new UserRegisterDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("pass");
+        dto.setRole("STAFF");
+        dto.setActive(false);
+
+        Role role = new Role();
+        role.setName("STAFF");
+
+        when(repo.existsByEmail("test@example.com")).thenReturn(false);
+        when(roleRepo.findByName("STAFF")).thenReturn(Optional.of(role));
+        when(passwordEncoder.encode("pass")).thenReturn("hashed");
+        when(repo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UserResponseDto result = service.register(dto);
+
+        assertFalse(result.isActive());
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(repo).save(captor.capture());
+        assertFalse(captor.getValue().isActive());
+    }
+
+    @Test
+    void getById_whenIdIsNull_throwsUserInvalidDataException() {
+        assertThrows(UserInvalidDataException.class, () -> service.getById(null));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
+    }
+
+    @Test
+    void getById_whenNotFound_returnsEmptyOptional() {
         when(repo.findById(99)).thenReturn(Optional.empty());
 
         Optional<UserResponseDto> result = service.getById(99);
 
         assertTrue(result.isEmpty());
         verify(repo).findById(99);
+        verifyNoMoreInteractions(repo);
     }
 
     @Test
-    void getById_shouldReturnDto_whenUserFound() {
-        Role r = role("ADMIN");
-        User u = user(1, "mail@mail.com", "hash", r, true);
+    void getById_whenFound_mapsToDto() {
+        Role role = new Role();
+        role.setName("ADMIN");
 
-        when(repo.findById(1)).thenReturn(Optional.of(u));
+        User user = new User();
+        user.setId(1);
+        user.setEmail("a@b.com");
+        user.setFirstName("A");
+        user.setLastName("B");
+        user.setAddress("Addr");
+        user.setPhoneNumber("06");
+        user.setRole(role);
+        user.setActive(true);
+
+        when(repo.findById(1)).thenReturn(Optional.of(user));
 
         Optional<UserResponseDto> result = service.getById(1);
 
         assertTrue(result.isPresent());
         assertEquals(1, result.get().getId());
-        assertEquals("mail@mail.com", result.get().getEmail());
+        assertEquals("a@b.com", result.get().getEmail());
         assertEquals("ADMIN", result.get().getRole());
+        assertTrue(result.get().isActive());
 
         verify(repo).findById(1);
+        verifyNoMoreInteractions(repo);
     }
 
-    // ===== getAll() tests =====
-
     @Test
-    void getAll_shouldReturnMappedList() {
-        Role admin = role("ADMIN");
-        Role staff = role("STAFF");
-        User u1 = user(1, "a@mail.com", "h1", admin, true);
-        User u2 = user(2, "b@mail.com", "h2", staff, false);
+    void getAll_mapsAllToDtos() {
+        Role role = new Role();
+        role.setName("ADMIN");
 
-        when(repo.findAll()).thenReturn(Arrays.asList(u1, u2));
+        User u1 = new User();
+        u1.setId(1);
+        u1.setEmail("a@b.com");
+        u1.setRole(role);
+        u1.setActive(true);
+
+        User u2 = new User();
+        u2.setId(2);
+        u2.setEmail("c@d.com");
+        u2.setRole(null);
+        u2.setActive(false);
+
+        when(repo.findAll()).thenReturn(List.of(u1, u2));
 
         List<UserResponseDto> result = service.getAll();
 
         assertEquals(2, result.size());
-        assertEquals("a@mail.com", result.get(0).getEmail());
+        assertEquals(1, result.get(0).getId());
         assertEquals("ADMIN", result.get(0).getRole());
-        assertEquals("b@mail.com", result.get(1).getEmail());
-        assertEquals("STAFF", result.get(1).getRole());
+        assertEquals(2, result.get(1).getId());
+        assertNull(result.get(1).getRole());
 
         verify(repo).findAll();
-    }
-
-    // ===== updateProfile() tests =====
-
-    @Test
-    void updateProfile_shouldThrowInvalid_whenIdNull() {
-        UserUpdateDto dto = updateDto("x@mail.com", null, null, null, null, null, null);
-
-        assertThrows(UserInvalidDataException.class,
-                () -> service.updateProfile(null, dto));
+        verifyNoMoreInteractions(repo);
     }
 
     @Test
-    void updateProfile_shouldThrowInvalid_whenDtoNull() {
-        assertThrows(UserInvalidDataException.class,
-                () -> service.updateProfile(1, null));
+    void updateProfile_whenIdIsNull_throwsUserInvalidDataException() {
+        UserUpdateDto dto = new UserUpdateDto();
+        assertThrows(UserInvalidDataException.class, () -> service.updateProfile(null, dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void updateProfile_shouldThrowNotFound_whenUserNotFound() {
-        when(repo.findById(99)).thenReturn(Optional.empty());
-
-        UserUpdateDto dto = updateDto("x@mail.com", null, null, null, null, null, null);
-
-        assertThrows(UserNotFoundException.class,
-                () -> service.updateProfile(99, dto));
-
-        verify(repo).findById(99);
+    void updateProfile_whenDtoIsNull_throwsUserInvalidDataException() {
+        assertThrows(UserInvalidDataException.class, () -> service.updateProfile(1, null));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void updateProfile_shouldThrowInvalid_whenNewEmailBlank() {
-        Role admin = role("ADMIN");
-        User existing = user(1, "old@mail.com", "h", admin, true);
+    void updateProfile_whenUserNotFound_throwsUserNotFoundException() {
+        when(repo.findById(1)).thenReturn(Optional.empty());
 
-        when(repo.findById(1)).thenReturn(Optional.of(existing));
+        UserUpdateDto dto = new UserUpdateDto();
 
-        UserUpdateDto dto = updateDto("   ", null, null, null, null, null, null);
-
-        assertThrows(UserInvalidDataException.class,
-                () -> service.updateProfile(1, dto));
+        assertThrows(UserNotFoundException.class, () -> service.updateProfile(1, dto));
 
         verify(repo).findById(1);
+        verifyNoMoreInteractions(repo);
     }
 
     @Test
-    void updateProfile_shouldThrowEmailExists_whenEmailUsedByOther() {
-        Role admin = role("ADMIN");
-        User existing = user(1, "old@mail.com", "h", admin, true);
+    void updateProfile_whenEmailProvidedBlank_throwsUserInvalidDataException() {
+        User u = new User();
+        u.setId(1);
+        u.setEmail("old@example.com");
 
-        when(repo.findById(1)).thenReturn(Optional.of(existing));
-        when(repo.existsByEmail("new@mail.com")).thenReturn(true);
+        when(repo.findById(1)).thenReturn(Optional.of(u));
 
-        UserUpdateDto dto = updateDto("new@mail.com", null, null, null, null, null, null);
+        UserUpdateDto dto = new UserUpdateDto();
+        dto.setEmail("   ");
 
-        assertThrows(UserEmailAlreadyUsedException.class,
-                () -> service.updateProfile(1, dto));
+        assertThrows(UserInvalidDataException.class, () -> service.updateProfile(1, dto));
 
         verify(repo).findById(1);
-        verify(repo).existsByEmail("new@mail.com");
+        verifyNoMoreInteractions(repo);
     }
 
     @Test
-    void updateProfile_shouldThrowInvalid_whenRoleBlank() {
-        Role admin = role("ADMIN");
-        User existing = user(1, "old@mail.com", "h", admin, true);
+    void updateProfile_whenEmailChangesAndExists_throwsUserEmailAlreadyUsedException() {
+        User u = new User();
+        u.setId(1);
+        u.setEmail("old@example.com");
 
-        when(repo.findById(1)).thenReturn(Optional.of(existing));
+        when(repo.findById(1)).thenReturn(Optional.of(u));
+        when(repo.existsByEmail("new@example.com")).thenReturn(true);
 
-        UserUpdateDto dto = updateDto(null, null, null, null, null, null, "  ");
+        UserUpdateDto dto = new UserUpdateDto();
+        dto.setEmail("  new@example.com  ");
 
-        assertThrows(UserInvalidDataException.class,
-                () -> service.updateProfile(1, dto));
+        assertThrows(UserEmailAlreadyUsedException.class, () -> service.updateProfile(1, dto));
 
         verify(repo).findById(1);
-        verifyNoInteractions(roleRepo);
+        verify(repo).existsByEmail("new@example.com");
     }
 
     @Test
-    void updateProfile_shouldThrowInvalid_whenRoleNotFound() {
-        Role admin = role("ADMIN");
-        User existing = user(1, "old@mail.com", "h", admin, true);
+    void updateProfile_whenRoleBlankAfterTrim_throwsUserInvalidDataException() {
+        Role oldRole = new Role();
+        oldRole.setName("ADMIN");
 
-        when(repo.findById(1)).thenReturn(Optional.of(existing));
-        when(roleRepo.findByName("MANAGER")).thenReturn(Optional.empty());
+        User u = new User();
+        u.setId(1);
+        u.setEmail("old@example.com");
+        u.setRole(oldRole);
 
-        UserUpdateDto dto = updateDto(null, null, null, null, null, null, "MANAGER");
+        when(repo.findById(1)).thenReturn(Optional.of(u));
 
-        assertThrows(UserInvalidDataException.class,
-                () -> service.updateProfile(1, dto));
+        UserUpdateDto dto = new UserUpdateDto();
+        dto.setRole("   ");
+
+        assertThrows(UserInvalidDataException.class, () -> service.updateProfile(1, dto));
 
         verify(repo).findById(1);
-        verify(roleRepo).findByName("MANAGER");
+        verifyNoMoreInteractions(repo, roleRepo);
     }
 
     @Test
-    void updateProfile_shouldUpdateFieldsAndRole_whenValid() {
-        Role admin = role("ADMIN");
-        Role staff = role("STAFF");
+    void updateProfile_whenRoleNotFound_throwsUserInvalidDataException() {
+        Role oldRole = new Role();
+        oldRole.setName("ADMIN");
 
-        User existing = user(1, "old@mail.com", "h", admin, true);
+        User u = new User();
+        u.setId(1);
+        u.setEmail("old@example.com");
+        u.setRole(oldRole);
 
-        when(repo.findById(1)).thenReturn(Optional.of(existing));
-        when(repo.existsByEmail("new@mail.com")).thenReturn(false);
-        when(roleRepo.findByName("STAFF")).thenReturn(Optional.of(staff));
+        when(repo.findById(1)).thenReturn(Optional.of(u));
+        when(roleRepo.findByName("STAFF")).thenReturn(Optional.empty());
 
-        UserUpdateDto dto = updateDto(
-                "new@mail.com",
-                "NewFirst",
-                "NewLast",
-                "New Street",
-                "999",
-                false,
-                "STAFF"
-        );
+        UserUpdateDto dto = new UserUpdateDto();
+        dto.setRole("staff");
 
-        User updatedEntity = user(1, "new@mail.com", "h", staff, false);
-        updatedEntity.setFirstName("NewFirst");
-        updatedEntity.setLastName("NewLast");
-        updatedEntity.setAddress("New Street");
-        updatedEntity.setPhoneNumber("999");
+        assertThrows(UserInvalidDataException.class, () -> service.updateProfile(1, dto));
 
-        when(repo.save(any(User.class))).thenReturn(updatedEntity);
+        verify(repo).findById(1);
+        verify(roleRepo).findByName("STAFF");
+        verifyNoMoreInteractions(repo, roleRepo);
+    }
+
+    @Test
+    void updateProfile_whenValid_updatesFieldsAndSaves() {
+        Role oldRole = new Role();
+        oldRole.setName("ADMIN");
+
+        Role newRole = new Role();
+        newRole.setName("STAFF");
+
+        User u = new User();
+        u.setId(1);
+        u.setEmail("old@example.com");
+        u.setFirstName("Old");
+        u.setLastName("Name");
+        u.setAddress("Addr");
+        u.setPhoneNumber("06");
+        u.setRole(oldRole);
+        u.setActive(true);
+
+        when(repo.findById(1)).thenReturn(Optional.of(u));
+        when(repo.existsByEmail("new@example.com")).thenReturn(false);
+        when(roleRepo.findByName("STAFF")).thenReturn(Optional.of(newRole));
+        when(repo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UserUpdateDto dto = new UserUpdateDto();
+        dto.setEmail("  new@example.com  ");
+        dto.setFirstName("Jean");
+        dto.setLastName("Baruba");
+        dto.setAddress("Street 1");
+        dto.setPhoneNumber("0612345678");
+        dto.setRole("staff");
+        dto.setActive(false);
 
         UserResponseDto result = service.updateProfile(1, dto);
 
-        assertEquals(1, result.getId());
-        assertEquals("new@mail.com", result.getEmail());
-        assertEquals("NewFirst", result.getFirstName());
-        assertEquals("NewLast", result.getLastName());
-        assertEquals("New Street", result.getAddress());
-        assertEquals("999", result.getPhoneNumber());
+        assertEquals("new@example.com", result.getEmail());
+        assertEquals("Jean", result.getFirstName());
+        assertEquals("Baruba", result.getLastName());
+        assertEquals("Street 1", result.getAddress());
+        assertEquals("0612345678", result.getPhoneNumber());
         assertEquals("STAFF", result.getRole());
         assertFalse(result.isActive());
 
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(repo).save(captor.capture());
+        assertEquals("new@example.com", captor.getValue().getEmail());
+        assertEquals(newRole, captor.getValue().getRole());
+        assertFalse(captor.getValue().isActive());
+
         verify(repo).findById(1);
-        verify(repo).existsByEmail("new@mail.com");
+        verify(repo).existsByEmail("new@example.com");
         verify(roleRepo).findByName("STAFF");
         verify(repo).save(any(User.class));
-    }
-
-    // ===== changePassword() tests =====
-
-    @Test
-    void changePassword_shouldThrowInvalid_whenIdNull() {
-        ChangePasswordDto dto = cpDto("old", "new");
-        assertThrows(UserInvalidDataException.class,
-                () -> service.changePassword(null, dto));
+        verifyNoMoreInteractions(repo, roleRepo);
     }
 
     @Test
-    void changePassword_shouldThrowInvalid_whenDtoNull() {
-        assertThrows(UserInvalidDataException.class,
-                () -> service.changePassword(1, null));
+    void changePassword_whenIdIsNull_throwsUserInvalidDataException() {
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword("old");
+        dto.setNewPassword("new");
+
+        assertThrows(UserInvalidDataException.class, () -> service.changePassword(null, dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void changePassword_shouldThrowInvalid_whenOldBlank() {
-        ChangePasswordDto dto = cpDto("  ", "new");
-        assertThrows(UserInvalidDataException.class,
-                () -> service.changePassword(1, dto));
+    void changePassword_whenDtoIsNull_throwsUserInvalidDataException() {
+        assertThrows(UserInvalidDataException.class, () -> service.changePassword(1, null));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void changePassword_shouldThrowInvalid_whenNewBlank() {
-        ChangePasswordDto dto = cpDto("old", "  ");
-        assertThrows(UserInvalidDataException.class,
-                () -> service.changePassword(1, dto));
+    void changePassword_whenOldPasswordNull_throwsUserInvalidDataException() {
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword(null);
+        dto.setNewPassword("new");
+
+        assertThrows(UserInvalidDataException.class, () -> service.changePassword(1, dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void changePassword_shouldThrowNotFound_whenUserNotFound() {
-        ChangePasswordDto dto = cpDto("old", "new");
+    void changePassword_whenOldPasswordBlank_throwsUserInvalidDataException() {
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword("   ");
+        dto.setNewPassword("new");
 
-        when(repo.findById(99)).thenReturn(Optional.empty());
-
-        assertThrows(UserNotFoundException.class,
-                () -> service.changePassword(99, dto));
-
-        verify(repo).findById(99);
+        assertThrows(UserInvalidDataException.class, () -> service.changePassword(1, dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void changePassword_shouldThrowInvalidPassword_whenOldDoesNotMatch() {
-        Role admin = role("ADMIN");
-        User u = user(1, "mail@mail.com", "hash", admin, true);
+    void changePassword_whenNewPasswordNull_throwsUserInvalidDataException() {
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword("old");
+        dto.setNewPassword(null);
 
-        ChangePasswordDto dto = cpDto("old", "new");
+        assertThrows(UserInvalidDataException.class, () -> service.changePassword(1, dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
+    }
 
-        when(repo.findById(1)).thenReturn(Optional.of(u));
-        when(encoder.matches("old", "hash")).thenReturn(false);
+    @Test
+    void changePassword_whenNewPasswordBlank_throwsUserInvalidDataException() {
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword("old");
+        dto.setNewPassword("   ");
 
-        assertThrows(InvalidPasswordChangeException.class,
-                () -> service.changePassword(1, dto));
+        assertThrows(UserInvalidDataException.class, () -> service.changePassword(1, dto));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
+    }
+
+    @Test
+    void changePassword_whenUserNotFound_throwsUserNotFoundException() {
+        when(repo.findById(1)).thenReturn(Optional.empty());
+
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword("old");
+        dto.setNewPassword("new");
+
+        assertThrows(UserNotFoundException.class, () -> service.changePassword(1, dto));
 
         verify(repo).findById(1);
-        verify(encoder).matches("old", "hash");
+        verifyNoMoreInteractions(repo);
+        verifyNoInteractions(passwordEncoder);
     }
 
     @Test
-    void changePassword_shouldThrowInvalidPassword_whenNewEqualsOldHash() {
-        Role admin = role("ADMIN");
-        User u = user(1, "mail@mail.com", "hash", admin, true);
-
-        ChangePasswordDto dto = cpDto("old", "new");
+    void changePassword_whenOldPasswordDoesNotMatch_throwsInvalidPasswordChangeException() {
+        User u = new User();
+        u.setId(1);
+        u.setPasswordHash("hash");
 
         when(repo.findById(1)).thenReturn(Optional.of(u));
-        when(encoder.matches("old", "hash")).thenReturn(true);
-        when(encoder.matches("new", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("old", "hash")).thenReturn(false);
 
-        assertThrows(InvalidPasswordChangeException.class,
-                () -> service.changePassword(1, dto));
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword("old");
+        dto.setNewPassword("new");
+
+        assertThrows(InvalidPasswordChangeException.class, () -> service.changePassword(1, dto));
 
         verify(repo).findById(1);
-        verify(encoder).matches("old", "hash");
-        verify(encoder).matches("new", "hash");
+        verify(passwordEncoder).matches("old", "hash");
+        verifyNoMoreInteractions(repo, passwordEncoder);
     }
 
     @Test
-    void changePassword_shouldUpdatePassword_whenValid() {
-        Role admin = role("ADMIN");
-        User u = user(1, "mail@mail.com", "hash", admin, true);
-
-        ChangePasswordDto dto = cpDto("old", "new");
+    void changePassword_whenNewPasswordSameAsOld_throwsInvalidPasswordChangeException() {
+        User u = new User();
+        u.setId(1);
+        u.setPasswordHash("hash");
 
         when(repo.findById(1)).thenReturn(Optional.of(u));
-        when(encoder.matches("old", "hash")).thenReturn(true);
-        when(encoder.matches("new", "hash")).thenReturn(false);
-        when(encoder.encode("new")).thenReturn("newHash");
+        when(passwordEncoder.matches("old", "hash")).thenReturn(true);
+        when(passwordEncoder.matches("new", "hash")).thenReturn(true);
 
-        // we willen checken welke user naar save gaat
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword("old");
+        dto.setNewPassword("new");
+
+        assertThrows(InvalidPasswordChangeException.class, () -> service.changePassword(1, dto));
+
+        verify(repo).findById(1);
+        verify(passwordEncoder).matches("old", "hash");
+        verify(passwordEncoder).matches("new", "hash");
+        verifyNoMoreInteractions(repo, passwordEncoder);
+    }
+
+    @Test
+    void changePassword_whenValid_updatesHashAndReturnsTrue() {
+        User u = new User();
+        u.setId(1);
+        u.setPasswordHash("oldHash");
+
+        when(repo.findById(1)).thenReturn(Optional.of(u));
+        when(passwordEncoder.matches("old", "oldHash")).thenReturn(true);
+        when(passwordEncoder.matches("new", "oldHash")).thenReturn(false);
+        when(passwordEncoder.encode("new")).thenReturn("newHash");
         when(repo.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ChangePasswordDto dto = new ChangePasswordDto();
+        dto.setOldPassword("old");
+        dto.setNewPassword("new");
 
         boolean result = service.changePassword(1, dto);
 
         assertTrue(result);
 
-        verify(repo).findById(1);
-        verify(encoder).matches("old", "hash");
-        verify(encoder).matches("new", "hash");
-        verify(encoder).encode("new");
-
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(repo).save(captor.capture());
-        User savedUser = captor.getValue();
-        assertEquals("newHash", savedUser.getPasswordHash());
-    }
+        assertEquals("newHash", captor.getValue().getPasswordHash());
 
-    // ===== emailExists() tests =====
-
-    @Test
-    void emailExists_shouldThrowInvalid_whenEmailBlank() {
-        assertThrows(UserInvalidDataException.class,
-                () -> service.emailExists(" "));
+        verify(repo).findById(1);
+        verify(passwordEncoder).matches("old", "oldHash");
+        verify(passwordEncoder).matches("new", "oldHash");
+        verify(passwordEncoder).encode("new");
+        verify(repo).save(any(User.class));
+        verifyNoMoreInteractions(repo, passwordEncoder);
     }
 
     @Test
-    void emailExists_shouldReturnRepoResult_whenEmailValid() {
-        when(repo.existsByEmail("test@mail.com")).thenReturn(true);
+    void emailExists_whenEmailNull_throwsUserInvalidDataException() {
+        assertThrows(UserInvalidDataException.class, () -> service.emailExists(null));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
+    }
 
-        boolean result = service.emailExists("  test@mail.com  ");
+    @Test
+    void emailExists_whenEmailBlank_throwsUserInvalidDataException() {
+        assertThrows(UserInvalidDataException.class, () -> service.emailExists("   "));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
+    }
+
+    @Test
+    void emailExists_whenValid_trimsAndChecksRepo() {
+        when(repo.existsByEmail("test@example.com")).thenReturn(true);
+
+        boolean result = service.emailExists("  test@example.com  ");
 
         assertTrue(result);
-        verify(repo).existsByEmail("test@mail.com");
-    }
-
-    // ===== deleteUser() tests =====
-
-    @Test
-    void deleteUser_shouldThrowInvalid_whenIdNull() {
-        assertThrows(UserInvalidDataException.class,
-                () -> service.deleteUser(null));
+        verify(repo).existsByEmail("test@example.com");
+        verifyNoMoreInteractions(repo);
     }
 
     @Test
-    void deleteUser_shouldThrowNotFound_whenUserNotExist() {
-        when(repo.existsById(99)).thenReturn(false);
-
-        assertThrows(UserNotFoundException.class,
-                () -> service.deleteUser(99));
-
-        verify(repo).existsById(99);
-        verify(repo, never()).deleteById(anyInt());
+    void deleteUser_whenIdIsNull_throwsUserInvalidDataException() {
+        assertThrows(UserInvalidDataException.class, () -> service.deleteUser(null));
+        verifyNoInteractions(repo, roleRepo, passwordEncoder);
     }
 
     @Test
-    void deleteUser_shouldDelete_whenUserExists() {
-        when(repo.existsById(1)).thenReturn(true);
+    void deleteUser_whenNotExists_throwsUserNotFoundException() {
+        when(repo.existsById(9)).thenReturn(false);
 
-        service.deleteUser(1);
+        assertThrows(UserNotFoundException.class, () -> service.deleteUser(9));
 
-        verify(repo).existsById(1);
-        verify(repo).deleteById(1);
+        verify(repo).existsById(9);
+        verifyNoMoreInteractions(repo);
+    }
+
+    @Test
+    void deleteUser_whenExists_deletes() {
+        when(repo.existsById(9)).thenReturn(true);
+
+        service.deleteUser(9);
+
+        verify(repo).existsById(9);
+        verify(repo).deleteById(9);
+        verifyNoMoreInteractions(repo);
     }
 }
-*/

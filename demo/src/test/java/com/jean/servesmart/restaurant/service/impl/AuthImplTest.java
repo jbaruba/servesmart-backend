@@ -1,14 +1,14 @@
 package com.jean.servesmart.restaurant.service.impl;
-/* 
+
+import com.jean.servesmart.restaurant.dto.Auth.AuthResponseDto;
 import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
-import com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto;
-import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
 import com.jean.servesmart.restaurant.exception.auth.AuthInvalidDataException;
 import com.jean.servesmart.restaurant.exception.auth.InactiveAccountException;
 import com.jean.servesmart.restaurant.exception.auth.InvalidCredentialsException;
 import com.jean.servesmart.restaurant.model.Role;
 import com.jean.servesmart.restaurant.model.User;
 import com.jean.servesmart.restaurant.repository.UserRepository;
+import com.jean.servesmart.restaurant.service.interfaces.JwtService;
 import com.jean.servesmart.restaurant.service.interfaces.LoginLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +21,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,125 +36,192 @@ class AuthImplTest {
     @Mock
     private LoginLogService loginLogService;
 
+    @Mock
+    private JwtService jwtService;
+
     private AuthImpl service;
 
     @BeforeEach
-    void setUp() {
-        service = new AuthImpl(repo, passwordEncoder, loginLogService);
+    void setup() {
+        service = new AuthImpl(repo, passwordEncoder, loginLogService, jwtService);
     }
 
-    private UserLoginDto loginDto(String email, String password) {
+    @Test
+    void login_whenDtoIsNull_throwsAuthInvalidDataException() {
+        assertThrows(AuthInvalidDataException.class, () -> service.login(null));
+        verifyNoInteractions(repo, passwordEncoder, loginLogService, jwtService);
+    }
+
+    @Test
+    void login_whenEmailIsNull_throwsAuthInvalidDataException() {
         UserLoginDto dto = new UserLoginDto();
-        dto.setEmail(email);
-        dto.setPassword(password);
-        return dto;
-    }
+        dto.setEmail(null);
+        dto.setPassword("pass");
 
-    private User user(Integer id, String email, String passwordHash, boolean active) {
-        User u = new User();
-        u.setId(id);
-        u.setEmail(email);
-        u.setPasswordHash(passwordHash);
-        u.setActive(active);
-        Role r = new Role();
-        r.setName("ADMIN");
-        u.setRole(r);
-        return u;
+        assertThrows(AuthInvalidDataException.class, () -> service.login(dto));
+        verifyNoInteractions(repo, passwordEncoder, loginLogService, jwtService);
     }
 
     @Test
-    void login_shouldThrowInvalidData_whenDtoNull() {
-        assertThrows(AuthInvalidDataException.class,
-                () -> service.login(null));
+    void login_whenEmailIsBlank_throwsAuthInvalidDataException() {
+        UserLoginDto dto = new UserLoginDto();
+        dto.setEmail("   ");
+        dto.setPassword("pass");
 
-        verifyNoInteractions(repo, passwordEncoder, loginLogService);
+        assertThrows(AuthInvalidDataException.class, () -> service.login(dto));
+        verifyNoInteractions(repo, passwordEncoder, loginLogService, jwtService);
     }
 
     @Test
-    void login_shouldThrowInvalidData_whenEmailBlank() {
-        UserLoginDto dto = loginDto("   ", "123");
+    void login_whenPasswordIsNull_throwsAuthInvalidDataException() {
+        UserLoginDto dto = new UserLoginDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword(null);
 
-        assertThrows(AuthInvalidDataException.class,
-                () -> service.login(dto));
-
-        verifyNoInteractions(repo, passwordEncoder, loginLogService);
+        assertThrows(AuthInvalidDataException.class, () -> service.login(dto));
+        verifyNoInteractions(repo, passwordEncoder, loginLogService, jwtService);
     }
 
     @Test
-    void login_shouldThrowInvalidData_whenPasswordBlank() {
-        UserLoginDto dto = loginDto("test@mail.com", "   ");
+    void login_whenPasswordIsBlank_throwsAuthInvalidDataException() {
+        UserLoginDto dto = new UserLoginDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("   ");
 
-        assertThrows(AuthInvalidDataException.class,
-                () -> service.login(dto));
-
-        verifyNoInteractions(repo, passwordEncoder, loginLogService);
+        assertThrows(AuthInvalidDataException.class, () -> service.login(dto));
+        verifyNoInteractions(repo, passwordEncoder, loginLogService, jwtService);
     }
 
     @Test
-    void login_shouldThrowInvalidCredentials_whenUserNotFound() {
-        UserLoginDto dto = loginDto("test@mail.com", "123");
+    void login_whenUserNotFound_throwsInvalidCredentialsException() {
+        UserLoginDto dto = new UserLoginDto();
+        dto.setEmail("  test@example.com  ");
+        dto.setPassword("admin123");
 
-        when(repo.findByEmail("test@mail.com"))
-                .thenReturn(Optional.empty());
+        when(repo.findByEmail("test@example.com")).thenReturn(Optional.empty());
 
-        assertThrows(InvalidCredentialsException.class,
-                () -> service.login(dto));
+        assertThrows(InvalidCredentialsException.class, () -> service.login(dto));
 
-        verify(repo).findByEmail("test@mail.com");
-        verifyNoInteractions(passwordEncoder, loginLogService);
+        verify(repo).findByEmail("test@example.com");
+        verifyNoInteractions(passwordEncoder, loginLogService, jwtService);
     }
 
     @Test
-    void login_shouldThrowInactiveAccount_whenUserInactive() {
-        UserLoginDto dto = loginDto("test@mail.com", "123");
-        User u = user(1, "test@mail.com", "hash", false);
+    void login_whenUserInactive_throwsInactiveAccountException() {
+        UserLoginDto dto = new UserLoginDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("admin123");
 
-        when(repo.findByEmail("test@mail.com"))
-                .thenReturn(Optional.of(u));
+        User user = new User();
+        user.setId(10);
+        user.setEmail("test@example.com");
+        user.setActive(false);
 
-        assertThrows(InactiveAccountException.class,
-                () -> service.login(dto));
+        when(repo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
-        verify(repo).findByEmail("test@mail.com");
-        verifyNoInteractions(passwordEncoder, loginLogService);
+        assertThrows(InactiveAccountException.class, () -> service.login(dto));
+
+        verify(repo).findByEmail("test@example.com");
+        verifyNoInteractions(passwordEncoder, loginLogService, jwtService);
     }
 
     @Test
-    void login_shouldThrowInvalidCredentials_whenPasswordIncorrect() {
-        UserLoginDto dto = loginDto("test@mail.com", "wrong");
-        User u = user(1, "test@mail.com", "hashed", true);
+    void login_whenPasswordDoesNotMatch_throwsInvalidCredentialsException() {
+        UserLoginDto dto = new UserLoginDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("wrong");
 
-        when(repo.findByEmail("test@mail.com")).thenReturn(Optional.of(u));
-        when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
+        User user = new User();
+        user.setId(10);
+        user.setEmail("test@example.com");
+        user.setActive(true);
+        user.setPasswordHash("$2a$10$hash");
 
-        assertThrows(InvalidCredentialsException.class,
-                () -> service.login(dto));
+        when(repo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", "$2a$10$hash")).thenReturn(false);
 
-        verify(repo).findByEmail("test@mail.com");
-        verify(passwordEncoder).matches("wrong", "hashed");
-        verifyNoInteractions(loginLogService);
+        assertThrows(InvalidCredentialsException.class, () -> service.login(dto));
+
+        verify(repo).findByEmail("test@example.com");
+        verify(passwordEncoder).matches("wrong", "$2a$10$hash");
+        verifyNoInteractions(loginLogService, jwtService);
     }
 
     @Test
-    void login_shouldReturnUserResponseAndLogLogin_whenValidCredentials() {
-        UserLoginDto dto = loginDto("test@mail.com", "secret");
-        User u = user(1, "test@mail.com", "hashed", true);
+    void login_whenValid_returnsAuthResponseDto_andLogs_andGeneratesToken() {
+        UserLoginDto dto = new UserLoginDto();
+        dto.setEmail("  test@example.com  ");
+        dto.setPassword("admin123");
 
-        when(repo.findByEmail("test@mail.com")).thenReturn(Optional.of(u));
-        when(passwordEncoder.matches("secret", "hashed")).thenReturn(true);
+        Role role = new Role();
+        role.setName("ADMIN");
 
-        UserResponseDto result = service.login(dto);
+        User user = new User();
+        user.setId(10);
+        user.setEmail("test@example.com");
+        user.setFirstName("Jean");
+        user.setLastName("Baruba");
+        user.setAddress("Street 1");
+        user.setPhoneNumber("0612345678");
+        user.setRole(role);
+        user.setActive(true);
+        user.setPasswordHash("$2a$10$hash");
+
+        when(repo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("admin123", "$2a$10$hash")).thenReturn(true);
+        when(jwtService.generateToken(user)).thenReturn("jwt-token");
+
+        AuthResponseDto result = service.login(dto);
 
         assertNotNull(result);
-        assertEquals(1, result.getId());
-        assertEquals("test@mail.com", result.getEmail());
+        assertEquals("jwt-token", result.getToken());
+        assertNotNull(result.getUser());
+        assertEquals(10, result.getUser().getId());
+        assertEquals("test@example.com", result.getUser().getEmail());
+        assertEquals("Jean", result.getUser().getFirstName());
+        assertEquals("Baruba", result.getUser().getLastName());
+        assertEquals("Street 1", result.getUser().getAddress());
+        assertEquals("0612345678", result.getUser().getPhoneNumber());
+        assertEquals("ADMIN", result.getUser().getRole());
+        assertTrue(result.getUser().isActive());
 
-        ArgumentCaptor<LoginLogCreateDto> captor =
-                ArgumentCaptor.forClass(LoginLogCreateDto.class);
+        ArgumentCaptor<com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto> captor =
+                ArgumentCaptor.forClass(com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto.class);
 
         verify(loginLogService).log(captor.capture());
+        assertEquals(10, captor.getValue().getUserId());
+        assertEquals("LOGIN_SUCCESS", captor.getValue().getStatus());
 
-        LoginLogCreateDto logDto = captor.getValue();
+        verify(repo).findByEmail("test@example.com");
+        verify(passwordEncoder).matches("admin123", "$2a$10$hash");
+        verify(jwtService).generateToken(user);
+        verifyNoMoreInteractions(repo, passwordEncoder, loginLogService, jwtService);
+    }
+
+    @Test
+    void login_whenRoleIsNull_returnsUserWithNullRole() {
+        UserLoginDto dto = new UserLoginDto();
+        dto.setEmail("test@example.com");
+        dto.setPassword("admin123");
+
+        User user = new User();
+        user.setId(10);
+        user.setEmail("test@example.com");
+        user.setActive(true);
+        user.setPasswordHash("$2a$10$hash");
+        user.setRole(null);
+
+        when(repo.findByEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("admin123", "$2a$10$hash")).thenReturn(true);
+        when(jwtService.generateToken(user)).thenReturn("jwt-token");
+
+        AuthResponseDto result = service.login(dto);
+
+        assertNotNull(result);
+        assertNotNull(result.getUser());
+        assertNull(result.getUser().getRole());
+
+        verify(loginLogService).log(any());
+        verify(jwtService).generateToken(user);
     }
 }
-*/
