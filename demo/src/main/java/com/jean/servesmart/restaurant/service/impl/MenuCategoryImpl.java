@@ -1,8 +1,8 @@
 package com.jean.servesmart.restaurant.service.impl;
 
-import com.jean.servesmart.restaurant.dto.menuCategory.MenuCategoryCreateDto;
-import com.jean.servesmart.restaurant.dto.menuCategory.MenuCategoryResponseDto;
-import com.jean.servesmart.restaurant.dto.menuCategory.MenuCategoryUpdateDto;
+import com.jean.servesmart.restaurant.dto.menucategory.MenuCategoryCreateDto;
+import com.jean.servesmart.restaurant.dto.menucategory.MenuCategoryResponseDto;
+import com.jean.servesmart.restaurant.dto.menucategory.MenuCategoryUpdateDto;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryAlreadyExistsException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryInvalidDataException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryNotFoundException;

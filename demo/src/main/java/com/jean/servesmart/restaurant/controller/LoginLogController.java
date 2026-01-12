@@ -1,6 +1,6 @@
 package com.jean.servesmart.restaurant.controller;
 
-import com.jean.servesmart.restaurant.dto.loginLog.LoginLogResponseDto;
+import com.jean.servesmart.restaurant.dto.loginlog.LoginLogResponseDto;
 import com.jean.servesmart.restaurant.exception.loginlog.LoginLogInvalidDataException;
 import com.jean.servesmart.restaurant.exception.loginlog.LoginLogUserNotFoundException;
 import com.jean.servesmart.restaurant.response.ApiResponse;

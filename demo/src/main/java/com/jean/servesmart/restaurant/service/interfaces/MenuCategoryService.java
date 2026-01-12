@@ -3,7 +3,7 @@ package com.jean.servesmart.restaurant.service.interfaces;
 import java.util.List;
 import java.util.Optional;
 
-import com.jean.servesmart.restaurant.dto.menuCategory.*;
+import com.jean.servesmart.restaurant.dto.menucategory.*;
 
 public interface MenuCategoryService {
 

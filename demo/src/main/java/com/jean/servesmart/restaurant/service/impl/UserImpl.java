@@ -72,7 +72,7 @@ public class UserImpl implements UserService {
         user.setAddress(dto.getAddress());
         user.setPhoneNumber(dto.getPhoneNumber());
         user.setRole(role);
-        user.setActive(dto.getActive() != null ? dto.getActive() : true);
+       user.setActive(dto.getActive() == null || dto.getActive());
 
         User saved = repo.save(user);
         return toResponse(saved);

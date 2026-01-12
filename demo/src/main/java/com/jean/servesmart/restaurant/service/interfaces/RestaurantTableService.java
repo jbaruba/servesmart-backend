@@ -3,9 +3,9 @@ package com.jean.servesmart.restaurant.service.interfaces;
 import java.util.List;
 import java.util.Optional;
 
-import com.jean.servesmart.restaurant.dto.restaurantTable.RestaurantTableCreateDto;
-import com.jean.servesmart.restaurant.dto.restaurantTable.RestaurantTableResponseDto;
-import com.jean.servesmart.restaurant.dto.restaurantTable.RestaurantTableUpdateDto;
+import com.jean.servesmart.restaurant.dto.restauranttable.RestaurantTableCreateDto;
+import com.jean.servesmart.restaurant.dto.restauranttable.RestaurantTableResponseDto;
+import com.jean.servesmart.restaurant.dto.restauranttable.RestaurantTableUpdateDto;
 
 public interface RestaurantTableService {
 

@@ -185,8 +185,8 @@ class AuthImplTest {
         assertEquals("ADMIN", result.getUser().getRole());
         assertTrue(result.getUser().isActive());
 
-        ArgumentCaptor<com.jean.servesmart.restaurant.dto.loginLog.LoginLogCreateDto> captor =
-                ArgumentCaptor.forClass(com.jean.servesmart.restaurant.dto.loginLog.LoginLogCreateDto.class);
+        ArgumentCaptor<com.jean.servesmart.restaurant.dto.loginlog.LoginLogCreateDto> captor =
+                ArgumentCaptor.forClass(com.jean.servesmart.restaurant.dto.loginlog.LoginLogCreateDto.class);
 
         verify(loginLogService).log(captor.capture());
         assertEquals(10, captor.getValue().getUserId());

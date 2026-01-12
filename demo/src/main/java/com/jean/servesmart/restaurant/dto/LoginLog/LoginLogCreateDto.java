@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.loginLog;
+package com.jean.servesmart.restaurant.dto.loginlog;
 
 public class LoginLogCreateDto {
 

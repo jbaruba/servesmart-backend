@@ -1,8 +1,8 @@
 package com.jean.servesmart.restaurant.controller;
 
-import com.jean.servesmart.restaurant.dto.restaurantTable.RestaurantTableCreateDto;
-import com.jean.servesmart.restaurant.dto.restaurantTable.RestaurantTableResponseDto;
-import com.jean.servesmart.restaurant.dto.restaurantTable.RestaurantTableUpdateDto;
+import com.jean.servesmart.restaurant.dto.restauranttable.RestaurantTableCreateDto;
+import com.jean.servesmart.restaurant.dto.restauranttable.RestaurantTableResponseDto;
+import com.jean.servesmart.restaurant.dto.restauranttable.RestaurantTableUpdateDto;
 import com.jean.servesmart.restaurant.exception.restauranttable.RestaurantTableInvalidDataException;
 import com.jean.servesmart.restaurant.exception.restauranttable.RestaurantTableLabelAlreadyExistsException;
 import com.jean.servesmart.restaurant.exception.restauranttable.RestaurantTableNotFoundException;

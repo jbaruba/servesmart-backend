@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.menuCategory;
+package com.jean.servesmart.restaurant.dto.menucategory;
 
 public class MenuCategoryUpdateDto {
     private String name;
