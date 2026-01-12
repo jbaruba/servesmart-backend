@@ -1,8 +1,8 @@
 package com.jean.servesmart.restaurant.service.impl;
 
-import com.jean.servesmart.restaurant.dto.Reservation.ReservationCreateDto;
-import com.jean.servesmart.restaurant.dto.Reservation.ReservationResponseDto;
-import com.jean.servesmart.restaurant.dto.Reservation.ReservationUpdateDto;
+import com.jean.servesmart.restaurant.dto.reservation.ReservationCreateDto;
+import com.jean.servesmart.restaurant.dto.reservation.ReservationResponseDto;
+import com.jean.servesmart.restaurant.dto.reservation.ReservationUpdateDto;
 import com.jean.servesmart.restaurant.exception.reservation.ReservationInvalidDataException;
 import com.jean.servesmart.restaurant.exception.reservation.ReservationNotFoundException;
 import com.jean.servesmart.restaurant.exception.reservation.ReservationStatusNotFoundException;

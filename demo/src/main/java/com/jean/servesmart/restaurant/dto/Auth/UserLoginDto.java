@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.Auth;
+package com.jean.servesmart.restaurant.dto.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

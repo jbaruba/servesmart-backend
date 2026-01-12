@@ -1,6 +1,6 @@
-package com.jean.servesmart.restaurant.dto.Auth;
+package com.jean.servesmart.restaurant.dto.auth;
 
-import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
+import com.jean.servesmart.restaurant.dto.user.UserResponseDto;
 
 public class AuthResponseDto {
     private UserResponseDto user;

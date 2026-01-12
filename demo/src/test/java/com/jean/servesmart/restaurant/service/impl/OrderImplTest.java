@@ -1,6 +1,6 @@
 package com.jean.servesmart.restaurant.service.impl;
 
-import com.jean.servesmart.restaurant.dto.Order.*;
+import com.jean.servesmart.restaurant.dto.order.*;
 import com.jean.servesmart.restaurant.exception.order.*;
 import com.jean.servesmart.restaurant.model.*;
 import com.jean.servesmart.restaurant.repository.*;

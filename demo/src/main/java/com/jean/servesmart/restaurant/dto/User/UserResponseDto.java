@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.User;
+package com.jean.servesmart.restaurant.dto.user;
 
 import lombok.Getter;
 import lombok.Setter;

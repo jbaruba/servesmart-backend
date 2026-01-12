@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.Menu;
+package com.jean.servesmart.restaurant.dto.menu;
 
 import java.math.BigDecimal;
 

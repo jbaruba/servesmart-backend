@@ -1,9 +1,9 @@
 package com.jean.servesmart.restaurant.controller;
 
-import com.jean.servesmart.restaurant.dto.User.ChangePasswordDto;
-import com.jean.servesmart.restaurant.dto.User.UserRegisterDto;
-import com.jean.servesmart.restaurant.dto.User.UserResponseDto;
-import com.jean.servesmart.restaurant.dto.User.UserUpdateDto;
+import com.jean.servesmart.restaurant.dto.user.ChangePasswordDto;
+import com.jean.servesmart.restaurant.dto.user.UserRegisterDto;
+import com.jean.servesmart.restaurant.dto.user.UserResponseDto;
+import com.jean.servesmart.restaurant.dto.user.UserUpdateDto;
 import com.jean.servesmart.restaurant.exception.user.InvalidPasswordChangeException;
 import com.jean.servesmart.restaurant.exception.user.UserEmailAlreadyUsedException;
 import com.jean.servesmart.restaurant.exception.user.UserInvalidDataException;

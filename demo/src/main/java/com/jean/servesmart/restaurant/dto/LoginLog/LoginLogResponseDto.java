@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.LoginLog;
+package com.jean.servesmart.restaurant.dto.loginLog;
 
 import java.time.LocalDateTime;
 

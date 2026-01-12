@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.RestaurantTable;
+package com.jean.servesmart.restaurant.dto.restaurantTable;
 
 public class RestaurantTableCreateDto {
 

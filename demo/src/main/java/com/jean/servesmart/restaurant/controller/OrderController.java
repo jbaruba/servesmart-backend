@@ -1,9 +1,9 @@
 package com.jean.servesmart.restaurant.controller;
 
-import com.jean.servesmart.restaurant.dto.Order.OrderCreateDto;
-import com.jean.servesmart.restaurant.dto.Order.OrderItemCreateDto;
-import com.jean.servesmart.restaurant.dto.Order.OrderResponseDto;
-import com.jean.servesmart.restaurant.dto.Order.OrderStatusUpdateDto;
+import com.jean.servesmart.restaurant.dto.order.OrderCreateDto;
+import com.jean.servesmart.restaurant.dto.order.OrderItemCreateDto;
+import com.jean.servesmart.restaurant.dto.order.OrderResponseDto;
+import com.jean.servesmart.restaurant.dto.order.OrderStatusUpdateDto;
 import com.jean.servesmart.restaurant.exception.order.OrderInvalidDataException;
 import com.jean.servesmart.restaurant.exception.order.OrderMenuItemNotFoundException;
 import com.jean.servesmart.restaurant.exception.order.OrderNotFoundException;
@@ -171,7 +171,7 @@ public class OrderController {
     public ResponseEntity<ApiResponse<?>> updateItem(
             @PathVariable Integer orderId,
             @PathVariable Integer itemId,
-            @Valid @RequestBody com.jean.servesmart.restaurant.dto.Order.OrderItemUpdateDto dto
+            @Valid @RequestBody com.jean.servesmart.restaurant.dto.order.OrderItemUpdateDto dto
     ) {
         try {
             OrderResponseDto updated = orders.updateItem(orderId, itemId, dto);
@@ -258,7 +258,7 @@ public class OrderController {
     @PostMapping("/{orderId}/pay")
     public ResponseEntity<ApiResponse<?>> pay(
             @PathVariable Integer orderId,
-            @Valid @RequestBody com.jean.servesmart.restaurant.dto.Order.PayOrderDto dto
+            @Valid @RequestBody com.jean.servesmart.restaurant.dto.order.PayOrderDto dto
     ) {
         try {
             OrderResponseDto updated = orders.pay(orderId, dto);

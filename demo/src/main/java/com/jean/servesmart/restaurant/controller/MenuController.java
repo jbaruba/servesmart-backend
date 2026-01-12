@@ -1,6 +1,6 @@
 package com.jean.servesmart.restaurant.controller;
 
-import com.jean.servesmart.restaurant.dto.Menu.MenuItemDto;
+import com.jean.servesmart.restaurant.dto.menu.MenuItemDto;
 import com.jean.servesmart.restaurant.exception.menuitem.MenuItemAlreadyExistsException;
 import com.jean.servesmart.restaurant.exception.menuitem.MenuItemCategoryNotFoundException;
 import com.jean.servesmart.restaurant.exception.menuitem.MenuItemInvalidDataException;

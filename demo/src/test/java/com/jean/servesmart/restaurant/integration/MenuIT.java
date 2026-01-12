@@ -1,7 +1,7 @@
 package com.jean.servesmart.restaurant.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jean.servesmart.restaurant.dto.Menu.MenuItemDto;
+import com.jean.servesmart.restaurant.dto.menu.MenuItemDto;
 import com.jean.servesmart.restaurant.model.MenuCategory;
 import com.jean.servesmart.restaurant.model.MenuItems;
 import com.jean.servesmart.restaurant.repository.MenuCategoryRepository;

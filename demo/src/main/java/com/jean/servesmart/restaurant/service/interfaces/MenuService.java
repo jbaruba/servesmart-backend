@@ -1,8 +1,9 @@
 package com.jean.servesmart.restaurant.service.interfaces;
 
-import com.jean.servesmart.restaurant.dto.Menu.MenuItemDto;
 import java.util.List;
 import java.util.Optional;
+
+import com.jean.servesmart.restaurant.dto.menu.MenuItemDto;
 
 public interface MenuService {
 

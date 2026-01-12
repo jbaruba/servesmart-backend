@@ -1,7 +1,7 @@
 package com.jean.servesmart.restaurant.service.impl;
 
-import com.jean.servesmart.restaurant.dto.Auth.AuthResponseDto;
-import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
+import com.jean.servesmart.restaurant.dto.auth.AuthResponseDto;
+import com.jean.servesmart.restaurant.dto.auth.UserLoginDto;
 import com.jean.servesmart.restaurant.exception.auth.AuthInvalidDataException;
 import com.jean.servesmart.restaurant.exception.auth.InactiveAccountException;
 import com.jean.servesmart.restaurant.exception.auth.InvalidCredentialsException;
@@ -185,8 +185,8 @@ class AuthImplTest {
         assertEquals("ADMIN", result.getUser().getRole());
         assertTrue(result.getUser().isActive());
 
-        ArgumentCaptor<com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto> captor =
-                ArgumentCaptor.forClass(com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto.class);
+        ArgumentCaptor<com.jean.servesmart.restaurant.dto.loginLog.LoginLogCreateDto> captor =
+                ArgumentCaptor.forClass(com.jean.servesmart.restaurant.dto.loginLog.LoginLogCreateDto.class);
 
         verify(loginLogService).log(captor.capture());
         assertEquals(10, captor.getValue().getUserId());

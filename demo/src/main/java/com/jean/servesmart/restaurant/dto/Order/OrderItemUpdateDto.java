@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.Order;
+package com.jean.servesmart.restaurant.dto.order;
 
 import jakarta.validation.constraints.Min;
 

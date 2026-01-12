@@ -1,7 +1,7 @@
 package com.jean.servesmart.restaurant.service.impl;
 
-import com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto;
-import com.jean.servesmart.restaurant.dto.LoginLog.LoginLogResponseDto;
+import com.jean.servesmart.restaurant.dto.loginLog.LoginLogCreateDto;
+import com.jean.servesmart.restaurant.dto.loginLog.LoginLogResponseDto;
 import com.jean.servesmart.restaurant.exception.loginlog.LoginLogInvalidDataException;
 import com.jean.servesmart.restaurant.exception.loginlog.LoginLogUserNotFoundException;
 import com.jean.servesmart.restaurant.model.LoginLog;

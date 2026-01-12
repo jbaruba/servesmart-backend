@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.MenuCategory;
+package com.jean.servesmart.restaurant.dto.menuCategory;
 
 public class MenuCategoryResponseDto {
     private Integer id;

@@ -1,7 +1,7 @@
 package com.jean.servesmart.restaurant.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jean.servesmart.restaurant.dto.MenuCategory.MenuCategoryCreateDto;
+import com.jean.servesmart.restaurant.dto.menuCategory.MenuCategoryCreateDto;
 import com.jean.servesmart.restaurant.model.MenuCategory;
 import com.jean.servesmart.restaurant.repository.MenuCategoryRepository;
 import org.junit.jupiter.api.BeforeEach;

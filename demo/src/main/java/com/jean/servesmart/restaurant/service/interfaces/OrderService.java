@@ -1,9 +1,9 @@
 package com.jean.servesmart.restaurant.service.interfaces;
 
-import com.jean.servesmart.restaurant.dto.Order.*;
-
 import java.util.List;
 import java.util.Optional;
+
+import com.jean.servesmart.restaurant.dto.order.*;
 
 public interface OrderService {
 

@@ -1,4 +1,4 @@
-package com.jean.servesmart.restaurant.dto.Reservation;
+package com.jean.servesmart.restaurant.dto.reservation;
 
 import java.time.LocalDateTime;
 

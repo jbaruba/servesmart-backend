@@ -1,7 +1,7 @@
 package com.jean.servesmart.restaurant.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jean.servesmart.restaurant.dto.Auth.UserLoginDto;
+import com.jean.servesmart.restaurant.dto.auth.UserLoginDto;
 import com.jean.servesmart.restaurant.model.Role;
 import com.jean.servesmart.restaurant.model.User;
 import com.jean.servesmart.restaurant.repository.RoleRepository;

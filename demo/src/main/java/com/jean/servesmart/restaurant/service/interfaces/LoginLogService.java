@@ -1,9 +1,9 @@
 package com.jean.servesmart.restaurant.service.interfaces;
 
-import com.jean.servesmart.restaurant.dto.LoginLog.LoginLogCreateDto;
-import com.jean.servesmart.restaurant.dto.LoginLog.LoginLogResponseDto;
-
 import java.util.List;
+
+import com.jean.servesmart.restaurant.dto.loginLog.LoginLogCreateDto;
+import com.jean.servesmart.restaurant.dto.loginLog.LoginLogResponseDto;
 
 public interface LoginLogService {
 

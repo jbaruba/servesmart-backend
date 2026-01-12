@@ -1,8 +1,9 @@
 package com.jean.servesmart.restaurant.service.interfaces;
 
-import com.jean.servesmart.restaurant.dto.User.*;
 import java.util.List;
 import java.util.Optional;
+
+import com.jean.servesmart.restaurant.dto.user.*;
 
 public interface UserService {
     UserResponseDto register(UserRegisterDto dto);
