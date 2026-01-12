@@ -22,6 +22,10 @@
     <java.version>17</java.version>
     <lombok.version>1.18.32</lombok.version>
     <mssql.jdbc.version>12.6.1.jre11</mssql.jdbc.version>
+
+    <!-- ✅ ADDED: versions for coverage + integration tests -->
+    <jacoco.version>0.8.12</jacoco.version>
+    <failsafe.version>3.2.5</failsafe.version>
   </properties>
 
   <dependencies>
@@ -81,8 +85,6 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- ================= TEST DEPENDENCIES ================= -->
-
     <!-- Spring Boot test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -97,7 +99,7 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- ✅ H2 database for integration tests -->
+    <!-- H2 database for integration tests -->
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
@@ -128,6 +130,50 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <!-- JaCoCo -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>${jacoco.version}</version>
+        <executions>
+
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+
+          <execution>
+            <id>report</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${failsafe.version}</version>
+        <executions>
+          <execution>
+            <id>integration-tests</id>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*IT.java</include>
+              </includes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
     </plugins>

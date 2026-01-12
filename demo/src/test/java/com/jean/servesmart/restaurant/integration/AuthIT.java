@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class AuthIntegrationTest {
+class AuthIT {
 
     @Autowired
     private MockMvc mockMvc;
@@ -47,8 +47,6 @@ class AuthIntegrationTest {
 
     @BeforeEach
     void setup() {
-        // ✅ Delete with REAL table names (as shown in the error: PUBLIC.LOGIN_LOG)
-        // Child first, then parent
         jdbcTemplate.execute("DELETE FROM LOGIN_LOG");
         jdbcTemplate.execute("DELETE FROM USERS");
         jdbcTemplate.execute("DELETE FROM ROLE");

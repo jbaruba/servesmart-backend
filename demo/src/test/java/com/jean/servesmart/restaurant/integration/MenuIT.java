@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class MenuIntegrationTest {
+class MenuIT {
 
     @Autowired
     private MockMvc mockMvc;
