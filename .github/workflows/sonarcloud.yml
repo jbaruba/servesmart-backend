@@ -12,7 +12,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./demo   # map waar pom.xml + mvnw staat
+        working-directory: ./demo
 
     steps:
       - name: Checkout repository
@@ -43,3 +43,4 @@ jobs:
           args: >
             -Dsonar.projectKey=jbaruba_servesmart-backend
             -Dsonar.organization=jbaruba
+            -Dsonar.java.binaries=target/classes
