@@ -12,7 +12,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./demo
+        working-directory: ./demo   # map waar pom.xml + mvnw staat
 
     steps:
       - name: Checkout repository
@@ -27,7 +27,10 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Build & test
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
+      - name: Build & run tests (unit + integration)
         run: ./mvnw -B clean verify
 
       - name: SonarCloud Scan
