@@ -3,6 +3,8 @@ package com.jean.servesmart.restaurant.service.impl;
 import com.jean.servesmart.restaurant.model.User;
 import com.jean.servesmart.restaurant.service.interfaces.JwtService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -33,8 +36,22 @@ public class JwtImpl implements JwtService {
 
     @Override
     public String generateToken(User user) {
-        String roleName = user.getRole() != null ? user.getRole().getName() : null;
-        return buildToken(Map.of("role", roleName, "userId", user.getId()), user.getEmail());
+        if (user == null || user.getEmail() == null || user.getEmail().isBlank() || user.getId() == null) {
+            throw new IllegalArgumentException("User, id and email are required to generate token");
+        }
+
+        String roleName = (user.getRole() != null) ? user.getRole().getName() : null;
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", user.getId());
+
+        // IMPORTANT: don't use Map.of with null values; HashMap allows it,
+        // but we will only include role claim if it's not null.
+        if (roleName != null) {
+            claims.put("role", roleName);
+        }
+
+        return buildToken(claims, user.getEmail());
     }
 
     @Override
@@ -44,8 +61,14 @@ public class JwtImpl implements JwtService {
 
     @Override
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        try {
+            String username = extractUsername(token);
+            return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        } catch (ExpiredJwtException ex) {
+            return false;
+        } catch (JwtException | IllegalArgumentException ex) {
+            return false;
+        }
     }
 
     private String buildToken(Map<String, Object> extraClaims, String subject) {
