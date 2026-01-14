@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,78 +74,50 @@ class MenuImplTest {
 
     @Test
     void create_whenNameIsNull_throwsMenuItemInvalidDataException() {
-        MenuCategory cat = new MenuCategory();
-        cat.setId(1);
-        cat.setName("Main");
-
         MenuItemDto dto = new MenuItemDto();
         dto.setCategoryId(1);
         dto.setName(null);
         dto.setPrice(BigDecimal.valueOf(10));
 
-        when(categoryRepo.findById(1)).thenReturn(Optional.of(cat));
-
         assertThrows(MenuItemInvalidDataException.class, () -> service.create(dto));
 
-        verify(categoryRepo).findById(1);
-        verifyNoInteractions(menuRepo);
+        verifyNoInteractions(menuRepo, categoryRepo);
     }
 
     @Test
     void create_whenNameIsBlank_throwsMenuItemInvalidDataException() {
-        MenuCategory cat = new MenuCategory();
-        cat.setId(1);
-        cat.setName("Main");
-
         MenuItemDto dto = new MenuItemDto();
         dto.setCategoryId(1);
         dto.setName("   ");
         dto.setPrice(BigDecimal.valueOf(10));
 
-        when(categoryRepo.findById(1)).thenReturn(Optional.of(cat));
-
         assertThrows(MenuItemInvalidDataException.class, () -> service.create(dto));
 
-        verify(categoryRepo).findById(1);
-        verifyNoInteractions(menuRepo);
+        verifyNoInteractions(menuRepo, categoryRepo);
     }
 
     @Test
     void create_whenPriceIsNull_throwsMenuItemInvalidDataException() {
-        MenuCategory cat = new MenuCategory();
-        cat.setId(1);
-        cat.setName("Main");
-
         MenuItemDto dto = new MenuItemDto();
         dto.setCategoryId(1);
         dto.setName("Burger");
         dto.setPrice(null);
 
-        when(categoryRepo.findById(1)).thenReturn(Optional.of(cat));
-
         assertThrows(MenuItemInvalidDataException.class, () -> service.create(dto));
 
-        verify(categoryRepo).findById(1);
-        verifyNoInteractions(menuRepo);
+        verifyNoInteractions(menuRepo, categoryRepo);
     }
 
     @Test
     void create_whenPriceIsNegative_throwsMenuItemInvalidDataException() {
-        MenuCategory cat = new MenuCategory();
-        cat.setId(1);
-        cat.setName("Main");
-
         MenuItemDto dto = new MenuItemDto();
         dto.setCategoryId(1);
         dto.setName("Burger");
         dto.setPrice(BigDecimal.valueOf(-0.01));
 
-        when(categoryRepo.findById(1)).thenReturn(Optional.of(cat));
-
         assertThrows(MenuItemInvalidDataException.class, () -> service.create(dto));
 
-        verify(categoryRepo).findById(1);
-        verifyNoInteractions(menuRepo);
+        verifyNoInteractions(menuRepo, categoryRepo);
     }
 
     @Test
@@ -233,27 +206,31 @@ class MenuImplTest {
         dto.setDescription("   ");
         dto.setPrice(BigDecimal.valueOf(10));
         dto.setActive(true);
+        dto.setGluten(false);
+        dto.setNuts(false);
+        dto.setDairy(false);
+        dto.setAlcohol(false);
 
         when(categoryRepo.findById(1)).thenReturn(Optional.of(cat));
         when(menuRepo.existsByCategory_IdAndName(1, "Burger")).thenReturn(false);
-
-        MenuItems saved = new MenuItems();
-        saved.setId(10);
-        saved.setCategory(cat);
-        saved.setName("Burger");
-        saved.setDescription(null);
-        saved.setPrice(BigDecimal.valueOf(10));
-        saved.setActive(true);
-
-        when(menuRepo.save(any(MenuItems.class))).thenReturn(saved);
+        when(menuRepo.save(any(MenuItems.class))).thenAnswer(inv -> {
+            MenuItems m = inv.getArgument(0);
+            m.setId(10);
+            return m;
+        });
 
         MenuItemDto result = service.create(dto);
 
+        assertNotNull(result);
         assertNull(result.getDescription());
 
         ArgumentCaptor<MenuItems> captor = ArgumentCaptor.forClass(MenuItems.class);
         verify(menuRepo).save(captor.capture());
         assertNull(captor.getValue().getDescription());
+
+        verify(categoryRepo).findById(1);
+        verify(menuRepo).existsByCategory_IdAndName(1, "Burger");
+        verifyNoMoreInteractions(menuRepo, categoryRepo);
     }
 
     @Test
@@ -476,6 +453,11 @@ class MenuImplTest {
 
         MenuItemDto dto = new MenuItemDto();
         dto.setCategoryId(2);
+        dto.setActive(item.isActive());
+        dto.setGluten(item.isGluten());
+        dto.setNuts(item.isNuts());
+        dto.setDairy(item.isDairy());
+        dto.setAlcohol(item.isAlcohol());
 
         assertThrows(MenuItemCategoryNotFoundException.class, () -> service.update(10, dto));
 
@@ -500,6 +482,11 @@ class MenuImplTest {
 
         MenuItemDto dto = new MenuItemDto();
         dto.setName("   ");
+        dto.setActive(item.isActive());
+        dto.setGluten(item.isGluten());
+        dto.setNuts(item.isNuts());
+        dto.setDairy(item.isDairy());
+        dto.setAlcohol(item.isAlcohol());
 
         assertThrows(MenuItemInvalidDataException.class, () -> service.update(10, dto));
 
@@ -523,6 +510,11 @@ class MenuImplTest {
 
         MenuItemDto dto = new MenuItemDto();
         dto.setPrice(BigDecimal.valueOf(-1));
+        dto.setActive(item.isActive());
+        dto.setGluten(item.isGluten());
+        dto.setNuts(item.isNuts());
+        dto.setDairy(item.isDairy());
+        dto.setAlcohol(item.isAlcohol());
 
         assertThrows(MenuItemInvalidDataException.class, () -> service.update(10, dto));
 
@@ -553,6 +545,11 @@ class MenuImplTest {
         MenuItemDto dto = new MenuItemDto();
         dto.setCategoryId(2);
         dto.setName("Burger");
+        dto.setActive(item.isActive());
+        dto.setGluten(item.isGluten());
+        dto.setNuts(item.isNuts());
+        dto.setDairy(item.isDairy());
+        dto.setAlcohol(item.isAlcohol());
 
         assertThrows(MenuItemAlreadyExistsException.class, () -> service.update(10, dto));
 
@@ -574,6 +571,11 @@ class MenuImplTest {
         item.setName("Burger");
         item.setDescription("Old");
         item.setPrice(BigDecimal.valueOf(10));
+        item.setActive(true);
+        item.setGluten(true);
+        item.setNuts(true);
+        item.setDairy(true);
+        item.setAlcohol(true);
 
         when(menuRepo.findById(10)).thenReturn(Optional.of(item));
         when(menuRepo.save(any(MenuItems.class))).thenAnswer(inv -> inv.getArgument(0));

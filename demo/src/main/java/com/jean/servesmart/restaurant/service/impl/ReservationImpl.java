@@ -117,14 +117,20 @@ public class ReservationImpl implements ReservationService {
         return toResponse(reservationRepo.save(r));
     }
 
-    @Override
+   @Override
     public boolean delete(Integer id) {
-        if (id == null || !reservationRepo.existsById(id)) {
+        if (id == null) {
+            throw new ReservationInvalidDataException();
+        }
+
+        if (!reservationRepo.existsById(id)) {
             throw new ReservationNotFoundException();
         }
+
         reservationRepo.deleteById(id);
         return true;
     }
+
 
     private void validateCreate(ReservationCreateDto dto) {
         if (dto == null

@@ -108,7 +108,11 @@ public class MenuImpl implements MenuService {
 
     @Override
     public boolean delete(Integer id) {
-        if (id == null || !menuRepo.existsById(id)) {
+        // ✅ FIX: null => InvalidData, not NotFound
+        if (id == null) {
+            throw new MenuItemInvalidDataException();
+        }
+        if (!menuRepo.existsById(id)) {
             throw new MenuItemNotFoundException();
         }
         menuRepo.deleteById(id);
@@ -116,8 +120,12 @@ public class MenuImpl implements MenuService {
     }
 
     private void validateCreateDto(MenuItemDto dto) {
-        if (dto == null || dto.getCategoryId() == null || dto.getName() == null || dto.getName().isBlank()
-                || dto.getPrice() == null || dto.getPrice().doubleValue() < 0) {
+        if (dto == null
+                || dto.getCategoryId() == null
+                || dto.getName() == null
+                || dto.getName().isBlank()
+                || dto.getPrice() == null
+                || dto.getPrice().doubleValue() < 0) {
             throw new MenuItemInvalidDataException();
         }
     }
@@ -150,7 +158,7 @@ public class MenuImpl implements MenuService {
 
         if ((nameChanged || categoryChanged)
                 && menuRepo.existsByCategory_IdAndNameAndIdNot(
-                        targetCategory.getId(), newName, item.getId())) {
+                targetCategory.getId(), newName, item.getId())) {
             throw new MenuItemAlreadyExistsException();
         }
 

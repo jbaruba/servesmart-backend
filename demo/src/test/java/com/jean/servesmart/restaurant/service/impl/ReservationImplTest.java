@@ -136,6 +136,7 @@ class ReservationImplTest {
 
         assertThrows(ReservationTimeSlotUnavailableException.class, () -> service.create(dto));
 
+        verify(tableRepo).findById(1);
         verify(reservationRepo).existsByRestaurantTable_IdAndEventDateTime(1, event);
         verifyNoInteractions(statusRepo);
     }
@@ -594,7 +595,12 @@ class ReservationImplTest {
         boolean result = service.delete(1);
 
         assertTrue(result);
+
+        // FIX: service calls existsById FIRST
+        verify(reservationRepo).existsById(1);
         verify(reservationRepo).deleteById(1);
+
         verifyNoMoreInteractions(reservationRepo);
+        verifyNoInteractions(tableRepo, statusRepo);
     }
 }
