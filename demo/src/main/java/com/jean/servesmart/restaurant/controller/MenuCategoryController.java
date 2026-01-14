@@ -21,6 +21,8 @@ import java.util.Optional;
 @RequestMapping("/api/menu-categories")
 public class MenuCategoryController {
 
+    private static final String INVALID_CATEGORY_DATA = "Invalid category data";
+
     private final MenuCategoryService service;
 
     public MenuCategoryController(MenuCategoryService service) {
@@ -29,14 +31,14 @@ public class MenuCategoryController {
 
     @RolesAllowed("ADMIN")
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody MenuCategoryCreateDto dto) {
+    public ResponseEntity<ApiResponse<MenuCategoryResponseDto>> create(@Valid @RequestBody MenuCategoryCreateDto dto) {
         try {
             MenuCategoryResponseDto category = service.create(dto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(category, "Category created successfully"));
         } catch (MenuCategoryInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Invalid category data"));
+                    .body(ApiResponse.error(INVALID_CATEGORY_DATA));
         } catch (MenuCategoryAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ApiResponse.error("Category name already exists"));
@@ -48,7 +50,7 @@ public class MenuCategoryController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getAll() {
+    public ResponseEntity<ApiResponse<List<MenuCategoryResponseDto>>> getAll() {
         try {
             List<MenuCategoryResponseDto> list = service.getAll();
             String message = list.isEmpty() ? "No categories found" : "Categories loaded";
@@ -61,7 +63,7 @@ public class MenuCategoryController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<MenuCategoryResponseDto>> getById(@PathVariable Integer id) {
         try {
             Optional<MenuCategoryResponseDto> category = service.getById(id);
             if (category.isEmpty()) {
@@ -77,7 +79,10 @@ public class MenuCategoryController {
 
     @RolesAllowed("ADMIN")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @RequestBody MenuCategoryUpdateDto dto) {
+    public ResponseEntity<ApiResponse<MenuCategoryResponseDto>> update(
+            @PathVariable Integer id,
+            @RequestBody MenuCategoryUpdateDto dto
+    ) {
         try {
             MenuCategoryResponseDto updated = service.update(id, dto);
             return ResponseEntity.ok(ApiResponse.success(updated, "Category updated successfully"));
@@ -86,7 +91,7 @@ public class MenuCategoryController {
                     .body(ApiResponse.error("Category not found"));
         } catch (MenuCategoryInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Invalid category data"));
+                    .body(ApiResponse.error(INVALID_CATEGORY_DATA));
         } catch (MenuCategoryAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ApiResponse.error("Category name already exists"));
@@ -98,7 +103,7 @@ public class MenuCategoryController {
 
     @RolesAllowed("ADMIN")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> delete(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
         try {
             service.delete(id);
             return ResponseEntity.ok(ApiResponse.success(null, "Category deleted successfully"));
@@ -107,7 +112,7 @@ public class MenuCategoryController {
                     .body(ApiResponse.error("Category not found"));
         } catch (MenuCategoryInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Invalid category data"));
+                    .body(ApiResponse.error(INVALID_CATEGORY_DATA));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to delete category"));
@@ -116,7 +121,7 @@ public class MenuCategoryController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/active")
-    public ResponseEntity<ApiResponse<?>> getActive() {
+    public ResponseEntity<ApiResponse<List<MenuCategoryResponseDto>>> getActive() {
         try {
             List<MenuCategoryResponseDto> list = service.getActive();
             String message = list.isEmpty() ? "No active categories found" : "Active categories retrieved";

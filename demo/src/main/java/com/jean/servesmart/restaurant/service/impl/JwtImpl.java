@@ -20,12 +20,13 @@ import java.util.function.Function;
 @Service
 public class JwtImpl implements JwtService {
 
-    private final String secret;
     private final long expirationMs;
     private final SecretKey key;
 
-    public JwtImpl(@Value("${app.jwt.secret}") String secret,@Value("${app.jwt.expiration-ms}") long expirationMs) {
-        this.secret = secret;
+    public JwtImpl(
+            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.expiration-ms}") long expirationMs
+    ) {
         this.expirationMs = expirationMs;
         this.key = createKey(secret);
     }
@@ -77,7 +78,7 @@ public class JwtImpl implements JwtService {
                 .getBody();
     }
 
-       private SecretKey createKey(String secret) {
+    private SecretKey createKey(String secret) {
         if (secret == null || secret.isBlank()) {
             throw new IllegalArgumentException("JWT secret must not be empty");
         }
@@ -90,5 +91,4 @@ public class JwtImpl implements JwtService {
             return Keys.hmacShaKeyFor(keyBytes);
         }
     }
-
 }

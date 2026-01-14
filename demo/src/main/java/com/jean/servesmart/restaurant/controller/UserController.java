@@ -23,6 +23,8 @@ import java.util.Optional;
 @RequestMapping("/api/users")
 public class UserController {
 
+    private static final String USER_NOT_FOUND = "User not found";
+
     private final UserService users;
 
     public UserController(UserService users) {
@@ -31,7 +33,7 @@ public class UserController {
 
     @RolesAllowed("ADMIN")
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<?>> register(@Valid @RequestBody UserRegisterDto dto) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> register(@Valid @RequestBody UserRegisterDto dto) {
         try {
             UserResponseDto user = users.register(dto);
             return ResponseEntity.status(HttpStatus.CREATED)
@@ -50,7 +52,7 @@ public class UserController {
 
     @RolesAllowed("ADMIN")
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getAll() {
+    public ResponseEntity<ApiResponse<List<UserResponseDto>>> getAll() {
         try {
             List<UserResponseDto> list = users.getAll();
             String message = list.isEmpty() ? "No users found" : "Users retrieved successfully";
@@ -63,12 +65,12 @@ public class UserController {
 
     @RolesAllowed("ADMIN")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> getById(@PathVariable Integer id) {
         try {
             Optional<UserResponseDto> user = users.getById(id);
             if (user.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.error("User not found"));
+                        .body(ApiResponse.error(USER_NOT_FOUND));
             }
             return ResponseEntity.ok(ApiResponse.success(user.get(), "User retrieved successfully"));
         } catch (UserInvalidDataException e) {
@@ -82,13 +84,13 @@ public class UserController {
 
     @RolesAllowed("ADMIN")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @Valid @RequestBody UserUpdateDto dto) {
+    public ResponseEntity<ApiResponse<UserResponseDto>> update(@PathVariable Integer id, @Valid @RequestBody UserUpdateDto dto) {
         try {
             UserResponseDto updated = users.updateProfile(id, dto);
             return ResponseEntity.ok(ApiResponse.success(updated, "User updated successfully"));
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("User not found"));
+                    .body(ApiResponse.error(USER_NOT_FOUND));
         } catch (UserInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid user data"));
@@ -103,13 +105,13 @@ public class UserController {
 
     @RolesAllowed("ADMIN")
     @PatchMapping("/{id}/password")
-    public ResponseEntity<ApiResponse<?>> changePassword(@PathVariable Integer id, @Valid @RequestBody ChangePasswordDto dto) {
+    public ResponseEntity<ApiResponse<Void>> changePassword(@PathVariable Integer id, @Valid @RequestBody ChangePasswordDto dto) {
         try {
             users.changePassword(id, dto);
             return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("User not found"));
+                    .body(ApiResponse.error(USER_NOT_FOUND));
         } catch (UserInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid password change data"));
@@ -124,7 +126,7 @@ public class UserController {
 
     @RolesAllowed("ADMIN")
     @GetMapping("/email-exists")
-    public ResponseEntity<ApiResponse<?>> emailExists(@RequestParam String email) {
+    public ResponseEntity<ApiResponse<Boolean>> emailExists(@RequestParam String email) {
         try {
             boolean exists = users.emailExists(email);
             return ResponseEntity.ok(ApiResponse.success(exists, "Email existence check completed"));
@@ -139,13 +141,13 @@ public class UserController {
 
     @RolesAllowed("ADMIN")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> deleteUser(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Integer id) {
         try {
             users.deleteUser(id);
             return ResponseEntity.ok(ApiResponse.success(null, "User deleted successfully"));
         } catch (UserNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("User not found"));
+                    .body(ApiResponse.error(USER_NOT_FOUND));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to delete user"));

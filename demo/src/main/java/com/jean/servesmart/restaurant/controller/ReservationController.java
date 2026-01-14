@@ -24,6 +24,12 @@ import java.util.Optional;
 @RequestMapping("/api/reservations")
 public class ReservationController {
 
+    private static final String RESERVATION_NOT_FOUND = "Reservation not found";
+    private static final String INVALID_RESERVATION_DATA = "Invalid reservation data";
+    private static final String TABLE_NOT_FOUND = "Restaurant table not found";
+    private static final String STATUS_NOT_FOUND = "Reservation status not found";
+    private static final String TIME_SLOT_UNAVAILABLE = "Time slot is unavailable";
+
     private final ReservationService reservations;
 
     public ReservationController(ReservationService reservations) {
@@ -32,23 +38,23 @@ public class ReservationController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> create(@Valid @RequestBody ReservationCreateDto dto) {
+    public ResponseEntity<ApiResponse<ReservationResponseDto>> create(@Valid @RequestBody ReservationCreateDto dto) {
         try {
             ReservationResponseDto reservation = reservations.create(dto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success(reservation, "Reservation created successfully"));
         } catch (ReservationInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Invalid reservation data"));
+                    .body(ApiResponse.error(INVALID_RESERVATION_DATA));
         } catch (ReservationTableNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Restaurant table not found"));
+                    .body(ApiResponse.error(TABLE_NOT_FOUND));
         } catch (ReservationStatusNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Reservation status not found"));
+                    .body(ApiResponse.error(STATUS_NOT_FOUND));
         } catch (ReservationTimeSlotUnavailableException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Time slot is unavailable"));
+                    .body(ApiResponse.error(TIME_SLOT_UNAVAILABLE));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to create reservation"));
@@ -57,12 +63,12 @@ public class ReservationController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> getById(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<ReservationResponseDto>> getById(@PathVariable Integer id) {
         try {
             Optional<ReservationResponseDto> reservation = reservations.getById(id);
             if (reservation.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.error("Reservation not found"));
+                        .body(ApiResponse.error(RESERVATION_NOT_FOUND));
             }
             return ResponseEntity.ok(ApiResponse.success(reservation.get(), "Reservation retrieved successfully"));
         } catch (ReservationInvalidDataException e) {
@@ -76,7 +82,7 @@ public class ReservationController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/status/{status}")
-    public ResponseEntity<ApiResponse<?>> getByStatus(@PathVariable String status) {
+    public ResponseEntity<ApiResponse<List<ReservationResponseDto>>> getByStatus(@PathVariable String status) {
         try {
             List<ReservationResponseDto> list = reservations.getByStatus(status);
             String message = list.isEmpty() ? "No reservations found for status" : "Reservations retrieved successfully";
@@ -92,7 +98,7 @@ public class ReservationController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @GetMapping("/table/{tableId}")
-    public ResponseEntity<ApiResponse<?>> getByTableAndDateRange(
+    public ResponseEntity<ApiResponse<List<ReservationResponseDto>>> getByTableAndDateRange(
             @PathVariable Integer tableId,
             @RequestParam("start") LocalDateTime start,
             @RequestParam("end") LocalDateTime end
@@ -112,25 +118,25 @@ public class ReservationController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> update(@PathVariable Integer id, @Valid @RequestBody ReservationUpdateDto dto) {
+    public ResponseEntity<ApiResponse<ReservationResponseDto>> update(@PathVariable Integer id, @Valid @RequestBody ReservationUpdateDto dto) {
         try {
             ReservationResponseDto updated = reservations.update(id, dto);
             return ResponseEntity.ok(ApiResponse.success(updated, "Reservation updated successfully"));
         } catch (ReservationNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Reservation not found"));
+                    .body(ApiResponse.error(RESERVATION_NOT_FOUND));
         } catch (ReservationInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Invalid reservation data"));
+                    .body(ApiResponse.error(INVALID_RESERVATION_DATA));
         } catch (ReservationTableNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Restaurant table not found"));
+                    .body(ApiResponse.error(TABLE_NOT_FOUND));
         } catch (ReservationStatusNotFoundException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Reservation status not found"));
+                    .body(ApiResponse.error(STATUS_NOT_FOUND));
         } catch (ReservationTimeSlotUnavailableException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Time slot is unavailable"));
+                    .body(ApiResponse.error(TIME_SLOT_UNAVAILABLE));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to update reservation"));
@@ -139,13 +145,13 @@ public class ReservationController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<?>> delete(@PathVariable Integer id) {
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Integer id) {
         try {
             reservations.delete(id);
             return ResponseEntity.ok(ApiResponse.success(null, "Reservation deleted successfully"));
         } catch (ReservationNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Reservation not found"));
+                    .body(ApiResponse.error(RESERVATION_NOT_FOUND));
         } catch (ReservationInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Invalid reservation id"));

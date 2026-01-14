@@ -30,7 +30,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<?>> login(@Valid @RequestBody UserLoginDto dto) {
+    public ResponseEntity<ApiResponse<AuthResponseDto>> login(@Valid @RequestBody UserLoginDto dto) {
         try {
             AuthResponseDto authResponse = auth.login(dto);
             return ResponseEntity.ok(ApiResponse.success(authResponse, "Login successful"));
@@ -51,7 +51,7 @@ public class AuthController {
 
     @RolesAllowed({"ADMIN", "STAFF"})
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<?>> logout(@RequestBody LogoutRequest req) {
+    public ResponseEntity<ApiResponse<Void>> logout(@RequestBody LogoutRequest req) {
         try {
             if (req == null || req.getUserId() == null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)

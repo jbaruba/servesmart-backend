@@ -5,8 +5,8 @@ import java.util.List;
 public class OrderCreateDto {
 
     private Integer userId;
-    private Integer restaurantTableId; // mag null
-    private String statusName; // mag null -> default bv. "NEW"
+    private Integer restaurantTableId; 
+    private String statusName; 
     private List<OrderItemCreateDto> items;
 
     public Integer getUserId() {

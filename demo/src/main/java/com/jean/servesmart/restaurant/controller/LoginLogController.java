@@ -24,7 +24,7 @@ public class LoginLogController {
 
     @RolesAllowed("ADMIN")
     @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<?>> getByUser(@PathVariable Integer userId) {
+    public ResponseEntity<ApiResponse<List<LoginLogResponseDto>>> getByUser(@PathVariable Integer userId) {
         try {
             List<LoginLogResponseDto> list = logs.getByUser(userId);
             String message = list.isEmpty() ? "No login logs found for this user" : "Login logs retrieved successfully";
