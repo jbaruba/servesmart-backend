@@ -13,14 +13,12 @@ import com.jean.servesmart.restaurant.model.User;
 import com.jean.servesmart.restaurant.repository.RoleRepository;
 import com.jean.servesmart.restaurant.repository.UserRepository;
 import com.jean.servesmart.restaurant.service.interfaces.UserService;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -38,21 +36,7 @@ public class UserImpl implements UserService {
 
     @Override
     public UserResponseDto register(UserRegisterDto dto) {
-        if (dto == null) {
-            throw new UserInvalidDataException();
-        }
-
-        if (dto.getEmail() == null || dto.getEmail().isBlank()) {
-            throw new UserInvalidDataException();
-        }
-
-        if (dto.getPassword() == null || dto.getPassword().isBlank()) {
-            throw new UserInvalidDataException();
-        }
-
-        if (dto.getRole() == null || dto.getRole().isBlank()) {
-            throw new UserInvalidDataException();
-        }
+        validateRegisterDto(dto);
 
         String email = dto.getEmail().trim();
         String roleName = dto.getRole().trim().toUpperCase();
@@ -72,10 +56,9 @@ public class UserImpl implements UserService {
         user.setAddress(dto.getAddress());
         user.setPhoneNumber(dto.getPhoneNumber());
         user.setRole(role);
-       user.setActive(dto.getActive() == null || dto.getActive());
+        user.setActive(dto.getActive() == null || dto.getActive());
 
-        User saved = repo.save(user);
-        return toResponse(saved);
+        return toResponse(repo.save(user));
     }
 
     @Override
@@ -85,8 +68,7 @@ public class UserImpl implements UserService {
             throw new UserInvalidDataException();
         }
 
-        return repo.findById(id)
-                .map(this::toResponse);
+        return repo.findById(id).map(this::toResponse);
     }
 
     @Override
@@ -95,77 +77,47 @@ public class UserImpl implements UserService {
         return repo.findAll()
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public UserResponseDto updateProfile(Integer id, UserUpdateDto dto) {
-        if (id == null) {
+        if (id == null || dto == null) {
             throw new UserInvalidDataException();
         }
 
-        if (dto == null) {
-            throw new UserInvalidDataException();
-        }
-
-        User u = repo.findById(id)
+        User user = repo.findById(id)
                 .orElseThrow(UserNotFoundException::new);
 
-        if (dto.getEmail() != null) {
-            if (dto.getEmail().isBlank()) {
-                throw new UserInvalidDataException();
-            }
-
-            String newEmail = dto.getEmail().trim();
-
-            if (!newEmail.equalsIgnoreCase(u.getEmail()) && repo.existsByEmail(newEmail)) {
-                throw new UserEmailAlreadyUsedException();
-            }
-
-            u.setEmail(newEmail);
-        }
+        updateEmail(dto, user);
+        updateRole(dto, user);
 
         if (dto.getFirstName() != null) {
-            u.setFirstName(dto.getFirstName());
+            user.setFirstName(dto.getFirstName());
         }
 
         if (dto.getLastName() != null) {
-            u.setLastName(dto.getLastName());
+            user.setLastName(dto.getLastName());
         }
 
         if (dto.getAddress() != null) {
-            u.setAddress(dto.getAddress());
+            user.setAddress(dto.getAddress());
         }
 
         if (dto.getPhoneNumber() != null) {
-            u.setPhoneNumber(dto.getPhoneNumber());
-        }
-
-        if (dto.getRole() != null) {
-            String roleName = dto.getRole().trim().toUpperCase();
-            if (roleName.isBlank()) {
-                throw new UserInvalidDataException();
-            }
-            Role role = roleRepo.findByName(roleName)
-                    .orElseThrow(UserInvalidDataException::new);
-            u.setRole(role);
+            user.setPhoneNumber(dto.getPhoneNumber());
         }
 
         if (dto.getActive() != null) {
-            u.setActive(dto.getActive());
+            user.setActive(dto.getActive());
         }
 
-        User updated = repo.save(u);
-        return toResponse(updated);
+        return toResponse(repo.save(user));
     }
 
     @Override
     public boolean changePassword(Integer id, ChangePasswordDto dto) {
-        if (id == null) {
-            throw new UserInvalidDataException();
-        }
-
-        if (dto == null) {
+        if (id == null || dto == null) {
             throw new UserInvalidDataException();
         }
 
@@ -177,18 +129,19 @@ public class UserImpl implements UserService {
             throw new UserInvalidDataException();
         }
 
-        User u = repo.findById(id)
+        User user = repo.findById(id)
                 .orElseThrow(UserNotFoundException::new);
 
-        if (!passwordEncoder.matches(dto.getOldPassword(), u.getPasswordHash())) {
-            throw new InvalidPasswordChangeException();
-        }
-        if (passwordEncoder.matches(dto.getNewPassword(), u.getPasswordHash())) {
+        if (!passwordEncoder.matches(dto.getOldPassword(), user.getPasswordHash())) {
             throw new InvalidPasswordChangeException();
         }
 
-        u.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
-        repo.save(u);
+        if (passwordEncoder.matches(dto.getNewPassword(), user.getPasswordHash())) {
+            throw new InvalidPasswordChangeException();
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
+        repo.save(user);
         return true;
     }
 
@@ -212,6 +165,48 @@ public class UserImpl implements UserService {
         }
 
         repo.deleteById(id);
+    }
+
+    private void validateRegisterDto(UserRegisterDto dto) {
+        if (dto == null
+                || dto.getEmail() == null || dto.getEmail().isBlank()
+                || dto.getPassword() == null || dto.getPassword().isBlank()
+                || dto.getRole() == null || dto.getRole().isBlank()) {
+            throw new UserInvalidDataException();
+        }
+    }
+
+    private void updateEmail(UserUpdateDto dto, User user) {
+        if (dto.getEmail() == null) {
+            return;
+        }
+
+        if (dto.getEmail().isBlank()) {
+            throw new UserInvalidDataException();
+        }
+
+        String newEmail = dto.getEmail().trim();
+        if (!newEmail.equalsIgnoreCase(user.getEmail()) && repo.existsByEmail(newEmail)) {
+            throw new UserEmailAlreadyUsedException();
+        }
+
+        user.setEmail(newEmail);
+    }
+
+    private void updateRole(UserUpdateDto dto, User user) {
+        if (dto.getRole() == null) {
+            return;
+        }
+
+        String roleName = dto.getRole().trim().toUpperCase();
+        if (roleName.isBlank()) {
+            throw new UserInvalidDataException();
+        }
+
+        Role role = roleRepo.findByName(roleName)
+                .orElseThrow(UserInvalidDataException::new);
+
+        user.setRole(role);
     }
 
     private UserResponseDto toResponse(User user) {

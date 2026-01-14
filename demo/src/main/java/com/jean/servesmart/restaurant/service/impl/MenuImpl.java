@@ -10,13 +10,11 @@ import com.jean.servesmart.restaurant.model.MenuItems;
 import com.jean.servesmart.restaurant.repository.MenuCategoryRepository;
 import com.jean.servesmart.restaurant.repository.MenuItemsRepository;
 import com.jean.servesmart.restaurant.service.interfaces.MenuService;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -32,41 +30,20 @@ public class MenuImpl implements MenuService {
 
     @Override
     public MenuItemDto create(MenuItemDto dto) {
+        validateCreateDto(dto);
 
-        if (dto == null) {
-            throw new MenuItemInvalidDataException();
-        }
-
-        if (dto.getCategoryId() == null) {
-            throw new MenuItemInvalidDataException();
-        }
         MenuCategory category = categoryRepo.findById(dto.getCategoryId())
                 .orElseThrow(MenuItemCategoryNotFoundException::new);
 
-        if (dto.getName() == null || dto.getName().isBlank()) {
-            throw new MenuItemInvalidDataException();
-        }
-
-        if (dto.getPrice() == null || dto.getPrice().doubleValue() < 0) {
-            throw new MenuItemInvalidDataException();
-        }
-
-        String trimmedName = dto.getName().trim();
-        if (menuRepo.existsByCategory_IdAndName(category.getId(), trimmedName)) {
+        String name = dto.getName().trim();
+        if (menuRepo.existsByCategory_IdAndName(category.getId(), name)) {
             throw new MenuItemAlreadyExistsException();
         }
 
         MenuItems item = new MenuItems();
         item.setCategory(category);
-        item.setName(trimmedName);
-
-        if (dto.getDescription() != null) {
-            String desc = dto.getDescription().trim();
-            item.setDescription(desc.isEmpty() ? null : desc);
-        } else {
-            item.setDescription(null);
-        }
-
+        item.setName(name);
+        item.setDescription(normalizeDescription(dto.getDescription()));
         item.setPrice(dto.getPrice());
         item.setActive(dto.isActive());
         item.setGluten(dto.isGluten());
@@ -74,8 +51,7 @@ public class MenuImpl implements MenuService {
         item.setDairy(dto.isDairy());
         item.setAlcohol(dto.isAlcohol());
 
-        MenuItems saved = menuRepo.save(item);
-        return toDto(saved);
+        return toDto(menuRepo.save(item));
     }
 
     @Override
@@ -84,7 +60,7 @@ public class MenuImpl implements MenuService {
         return menuRepo.findAll()
                 .stream()
                 .map(this::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -93,9 +69,7 @@ public class MenuImpl implements MenuService {
         if (id == null) {
             throw new MenuItemInvalidDataException();
         }
-
-        return menuRepo.findById(id)
-                .map(this::toDto);
+        return menuRepo.findById(id).map(this::toDto);
     }
 
     @Override
@@ -104,88 +78,101 @@ public class MenuImpl implements MenuService {
         if (categoryId == null) {
             throw new MenuItemInvalidDataException();
         }
-
         return menuRepo.findByCategory_Id(categoryId)
                 .stream()
                 .map(this::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     public MenuItemDto update(Integer id, MenuItemDto dto) {
-        if (id == null) {
-            throw new MenuItemInvalidDataException();
-        }
-
-        if (dto == null) {
-            throw new MenuItemInvalidDataException();
-        }
+        validateUpdateInput(id, dto);
 
         MenuItems item = menuRepo.findById(id)
                 .orElseThrow(MenuItemNotFoundException::new);
 
-        MenuCategory targetCategory = item.getCategory();
+        MenuCategory targetCategory = resolveCategory(item, dto);
+        handleNameUpdate(item, dto, targetCategory);
+        handlePriceUpdate(item, dto);
 
-        if (dto.getCategoryId() != null) {
-            targetCategory = categoryRepo.findById(dto.getCategoryId())
-                    .orElseThrow(MenuItemCategoryNotFoundException::new);
-        }
-
-        if (dto.getName() != null) {
-            if (dto.getName().isBlank()) {
-                throw new MenuItemInvalidDataException();
-            }
-            String newName = dto.getName().trim();
-
-            Integer targetCatId = targetCategory.getId();
-
-            boolean nameChanged = !newName.equals(item.getName());
-            boolean categoryChanged = !targetCatId.equals(item.getCategory().getId());
-
-            if ((nameChanged || categoryChanged)
-                    && menuRepo.existsByCategory_IdAndNameAndIdNot(targetCatId, newName, item.getId())) {
-                throw new MenuItemAlreadyExistsException();
-            }
-
-            item.setName(newName);
-        }
-
-        if (dto.getDescription() != null) {
-            String desc = dto.getDescription().trim();
-            item.setDescription(desc.isEmpty() ? null : desc);
-        }
-
-        if (dto.getPrice() != null) {
-            if (dto.getPrice().doubleValue() < 0) {
-                throw new MenuItemInvalidDataException();
-            }
-            item.setPrice(dto.getPrice());
-        }
-
+        item.setDescription(normalizeDescription(dto.getDescription()));
         item.setActive(dto.isActive());
         item.setGluten(dto.isGluten());
         item.setNuts(dto.isNuts());
         item.setDairy(dto.isDairy());
         item.setAlcohol(dto.isAlcohol());
-
         item.setCategory(targetCategory);
 
-        MenuItems updated = menuRepo.save(item);
-        return toDto(updated);
+        return toDto(menuRepo.save(item));
     }
 
     @Override
     public boolean delete(Integer id) {
-        if (id == null) {
+        if (id == null || !menuRepo.existsById(id)) {
+            throw new MenuItemNotFoundException();
+        }
+        menuRepo.deleteById(id);
+        return true;
+    }
+
+    private void validateCreateDto(MenuItemDto dto) {
+        if (dto == null || dto.getCategoryId() == null || dto.getName() == null || dto.getName().isBlank()
+                || dto.getPrice() == null || dto.getPrice().doubleValue() < 0) {
+            throw new MenuItemInvalidDataException();
+        }
+    }
+
+    private void validateUpdateInput(Integer id, MenuItemDto dto) {
+        if (id == null || dto == null) {
+            throw new MenuItemInvalidDataException();
+        }
+    }
+
+    private MenuCategory resolveCategory(MenuItems item, MenuItemDto dto) {
+        if (dto.getCategoryId() == null) {
+            return item.getCategory();
+        }
+        return categoryRepo.findById(dto.getCategoryId())
+                .orElseThrow(MenuItemCategoryNotFoundException::new);
+    }
+
+    private void handleNameUpdate(MenuItems item, MenuItemDto dto, MenuCategory targetCategory) {
+        if (dto.getName() == null) {
+            return;
+        }
+        if (dto.getName().isBlank()) {
             throw new MenuItemInvalidDataException();
         }
 
-        if (!menuRepo.existsById(id)) {
-            throw new MenuItemNotFoundException();
+        String newName = dto.getName().trim();
+        boolean nameChanged = !newName.equals(item.getName());
+        boolean categoryChanged = !targetCategory.getId().equals(item.getCategory().getId());
+
+        if ((nameChanged || categoryChanged)
+                && menuRepo.existsByCategory_IdAndNameAndIdNot(
+                        targetCategory.getId(), newName, item.getId())) {
+            throw new MenuItemAlreadyExistsException();
         }
 
-        menuRepo.deleteById(id);
-        return true;
+        item.setName(newName);
+    }
+
+    private void handlePriceUpdate(MenuItems item, MenuItemDto dto) {
+        if (dto.getPrice() == null) {
+            return;
+        }
+        if (dto.getPrice().doubleValue() < 0) {
+            throw new MenuItemInvalidDataException();
+        }
+        item.setPrice(dto.getPrice());
+    }
+
+    private String normalizeDescription(String description) {
+        if (description == null) {
+            return null;
+        }
+        String trimmed = description.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private MenuItemDto toDto(MenuItems item) {

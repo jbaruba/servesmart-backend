@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -87,7 +86,7 @@ public class RestaurantTableImpl implements RestaurantTableService {
         return repo.findAll()
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -96,7 +95,7 @@ public class RestaurantTableImpl implements RestaurantTableService {
         return repo.findByActiveTrue()
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -109,7 +108,7 @@ public class RestaurantTableImpl implements RestaurantTableService {
         return repo.findByStatus_Name(statusName.trim())
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

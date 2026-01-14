@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -43,7 +42,6 @@ public class OrderImpl implements OrderService {
                 this.tableStatusRepo = tableStatusRepo;
                 this.userRepo = userRepo;
         }
-
 
         @Override
         public OrderResponseDto create(OrderCreateDto dto) {
@@ -103,13 +101,17 @@ public class OrderImpl implements OrderService {
         @Override
         public List<OrderResponseDto> getByTable(Integer tableId) {
                 return ordersRepo.findByRestaurantTable_Id(tableId)
-                                .stream().map(this::toResponse).collect(Collectors.toList());
+                                .stream()
+                                .map(this::toResponse)
+                                .toList();
         }
 
         @Override
         public List<OrderResponseDto> getByStatus(String statusName) {
                 return ordersRepo.findByStatus_Name(statusName)
-                                .stream().map(this::toResponse).collect(Collectors.toList());
+                                .stream()
+                                .map(this::toResponse)
+                                .toList();
         }
 
         @Override
@@ -197,7 +199,6 @@ public class OrderImpl implements OrderService {
                 return toResponse(saved);
         }
 
-
         @Override
         public OrderResponseDto pay(Integer orderId, PayOrderDto dto) {
                 Orders order = ordersRepo.findById(orderId)
@@ -218,17 +219,20 @@ public class OrderImpl implements OrderService {
                 return toResponse(ordersRepo.save(order));
         }
 
-
         @Override
         public List<OrderResponseDto> getPaid() {
                 return ordersRepo.findByStatus_Name("PAID")
-                                .stream().map(this::toResponse).collect(Collectors.toList());
+                                .stream()
+                                .map(this::toResponse)
+                                .toList();
         }
 
         @Override
         public List<OrderResponseDto> getOpenByTable() {
                 return ordersRepo.findByStatus_NameNotIn(List.of("PAID", "CANCELLED"))
-                                .stream().map(this::toResponse).collect(Collectors.toList());
+                                .stream()
+                                .map(this::toResponse)
+                                .toList();
         }
 
         private OrderResponseDto toResponse(Orders o) {
@@ -243,7 +247,8 @@ public class OrderImpl implements OrderService {
 
                 if (o.getOrderItems() != null) {
                         dto.setItems(o.getOrderItems().stream()
-                                        .map(this::toItemResponse).collect(Collectors.toList()));
+                                        .map(this::toItemResponse)
+                                        .toList());
                 }
                 return dto;
         }
@@ -287,5 +292,4 @@ public class OrderImpl implements OrderService {
                 order.setStatus(status);
                 return toResponse(ordersRepo.save(order));
         }
-
 }

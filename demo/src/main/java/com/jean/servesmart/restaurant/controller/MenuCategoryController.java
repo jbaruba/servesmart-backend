@@ -22,6 +22,7 @@ import java.util.Optional;
 public class MenuCategoryController {
 
     private static final String INVALID_CATEGORY_DATA = "Invalid category data";
+    private static final String CATEGORY_NOT_FOUND = "Category not found";
 
     private final MenuCategoryService service;
 
@@ -68,7 +69,7 @@ public class MenuCategoryController {
             Optional<MenuCategoryResponseDto> category = service.getById(id);
             if (category.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.error("Category not found"));
+                        .body(ApiResponse.error(CATEGORY_NOT_FOUND));
             }
             return ResponseEntity.ok(ApiResponse.success(category.get(), "Category retrieved"));
         } catch (Exception e) {
@@ -88,7 +89,7 @@ public class MenuCategoryController {
             return ResponseEntity.ok(ApiResponse.success(updated, "Category updated successfully"));
         } catch (MenuCategoryNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Category not found"));
+                    .body(ApiResponse.error(CATEGORY_NOT_FOUND));
         } catch (MenuCategoryInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(INVALID_CATEGORY_DATA));
@@ -109,7 +110,7 @@ public class MenuCategoryController {
             return ResponseEntity.ok(ApiResponse.success(null, "Category deleted successfully"));
         } catch (MenuCategoryNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Category not found"));
+                    .body(ApiResponse.error(CATEGORY_NOT_FOUND));
         } catch (MenuCategoryInvalidDataException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error(INVALID_CATEGORY_DATA));

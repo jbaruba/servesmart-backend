@@ -6,17 +6,14 @@ import com.jean.servesmart.restaurant.dto.menucategory.MenuCategoryUpdateDto;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryAlreadyExistsException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryInvalidDataException;
 import com.jean.servesmart.restaurant.exception.menucategory.MenuCategoryNotFoundException;
-
 import com.jean.servesmart.restaurant.model.MenuCategory;
 import com.jean.servesmart.restaurant.repository.MenuCategoryRepository;
 import com.jean.servesmart.restaurant.service.interfaces.MenuCategoryService;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -30,16 +27,7 @@ public class MenuCategoryImpl implements MenuCategoryService {
 
     @Override
     public MenuCategoryResponseDto create(MenuCategoryCreateDto dto) {
-
-        if (dto == null) {
-            throw new MenuCategoryInvalidDataException();
-        }
-
-        if (dto.getName() == null || dto.getName().isBlank()) {
-            throw new MenuCategoryInvalidDataException();
-        }
-
-        if (dto.getPosition() == null || dto.getPosition() < 0) {
+        if (dto == null || dto.getName() == null || dto.getName().isBlank() || dto.getPosition() == null || dto.getPosition() < 0) {
             throw new MenuCategoryInvalidDataException();
         }
 
@@ -59,8 +47,7 @@ public class MenuCategoryImpl implements MenuCategoryService {
         category.setPosition(position);
         category.setActive(dto.isActive());
 
-        MenuCategory saved = repo.save(category);
-        return toResponse(saved);
+        return toResponse(repo.save(category));
     }
 
     @Override
@@ -69,23 +56,18 @@ public class MenuCategoryImpl implements MenuCategoryService {
         return repo.findAll()
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<MenuCategoryResponseDto> getById(Integer id) {
-        return repo.findById(id)
-                .map(this::toResponse);
+        return repo.findById(id).map(this::toResponse);
     }
 
     @Override
     public MenuCategoryResponseDto update(Integer id, MenuCategoryUpdateDto dto) {
-        if (id == null) {
-            throw new MenuCategoryInvalidDataException();
-        }
-
-        if (dto == null) {
+        if (id == null || dto == null) {
             throw new MenuCategoryInvalidDataException();
         }
 
@@ -98,11 +80,9 @@ public class MenuCategoryImpl implements MenuCategoryService {
             }
 
             String newName = dto.getName().trim();
-
             if (!newName.equals(category.getName()) && repo.existsByName(newName)) {
                 throw new MenuCategoryAlreadyExistsException();
             }
-
             category.setName(newName);
         }
 
@@ -112,14 +92,9 @@ public class MenuCategoryImpl implements MenuCategoryService {
             }
 
             Integer newPosition = dto.getPosition();
-
-           
-            if (newPosition != 0
-                    && !newPosition.equals(category.getPosition())
-                    && repo.existsByPosition(newPosition)) {
+            if (newPosition != 0 && !newPosition.equals(category.getPosition()) && repo.existsByPosition(newPosition)) {
                 newPosition = 0;
             }
-
             category.setPosition(newPosition);
         }
 
@@ -127,8 +102,7 @@ public class MenuCategoryImpl implements MenuCategoryService {
             category.setActive(dto.getActive());
         }
 
-        MenuCategory updated = repo.save(category);
-        return toResponse(updated);
+        return toResponse(repo.save(category));
     }
 
     @Override
@@ -151,7 +125,7 @@ public class MenuCategoryImpl implements MenuCategoryService {
         return repo.findByActiveTrue()
                 .stream()
                 .map(this::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private MenuCategoryResponseDto toResponse(MenuCategory c) {
