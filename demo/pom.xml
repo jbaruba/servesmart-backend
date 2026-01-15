@@ -23,7 +23,7 @@
     <lombok.version>1.18.32</lombok.version>
     <mssql.jdbc.version>12.6.1.jre11</mssql.jdbc.version>
 
-    <!-- ✅ ADDED: versions for coverage + integration tests -->
+    <!-- Coverage + integration tests -->
     <jacoco.version>0.8.12</jacoco.version>
     <failsafe.version>3.2.5</failsafe.version>
   </properties>
@@ -137,8 +137,16 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco.version}</version>
-        <executions>
 
+        <!-- ✅ Exclude DTO + Controller from coverage -->
+        <configuration>
+          <excludes>
+            <exclude>**/controller/**</exclude>
+            <exclude>**/dto/**</exclude>
+          </excludes>
+        </configuration>
+
+        <executions>
           <execution>
             <id>prepare-agent</id>
             <goals>
@@ -156,6 +164,7 @@
         </executions>
       </plugin>
 
+      <!-- Failsafe: Integration tests (classes ending with *IT.java) -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
